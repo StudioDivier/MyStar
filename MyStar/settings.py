@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/3.1/ref/settings/
 """
 
 from pathlib import Path
+from . import config
 import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -21,47 +22,47 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/3.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = '57n&^f9t$y8+n)zhvq3!9%69g)y18ukioc!6xnk4t4_oqfinl7'
+SECRET_KEY = config.sk
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
-
+# '192.168.1.131'
 ALLOWED_HOSTS = []
+SITE_ID = 1
 
 
 # Application definition
 
 INSTALLED_APPS = [
-    'django.contrib.admin',
+    # 'admin_tools',
+    # 'admin_tools.theming',
+    # 'admin_tools.menu',
+    # 'admin_tools.dashboard',
+    # Core
     'django.contrib.auth',
+    'django.contrib.sites',
+    'django.contrib.admin',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-
     # Applications
     'rest_framework',
-    'rest_framework.authtoken',
-    'rest_auth',
-    'django.contrib.sites',
-    'allauth',
-    'allauth.account',
-    'rest_auth.registration',
-    'djoser',
-    'rest_framework_simplejwt',
-
-
+    # Apps
     'users',
     'api',
 ]
 
 AUTH_USER_MODEL = 'users.Customers'
 
-REST_FRAMEWORK = {
-  'DEFAULT_AUTHENTICATION_CLASSES': (
-      'rest_framework.authentication.TokenAuthentication',
-    )
-}
+# REST_FRAMEWORK = {
+#     'DEFAULT_PERMISSION_CLASSES': (
+#         'rest_framework.permissions.IsAuthenticated',
+#     ),
+#     'DEFAULT_AUTHENTICATION_CLASSES': (
+#         'rest_framework_jwt.authentication.JSONWebTokenAuthentication',
+#     ),
+# }
 
 
 MIDDLEWARE = [
@@ -102,16 +103,8 @@ WSGI_APPLICATION = 'MyStar.wsgi.application'
 # https://docs.djangoproject.com/en/3.1/ref/settings/#databases
 
 # PostgreSQL 10.14
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'postgres',
-        'USER': 'postgres',
-        'PASSWORD': 'admin',
-        'HOST': '127.0.0.1',
-        'PORT': '5432',
-    }
-}
+
+DATABASES = config.data
 
 
 
@@ -138,6 +131,8 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
+LANGUAGES = (('en', "English",), ('ru', "Russian",),)
+
 TIME_ZONE = 'UTC'
 
 USE_I18N = True
@@ -150,5 +145,9 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.1/howto/static-files/
 
-STATIC_URL = '/static/'
-
+if DEBUG:
+    STATIC_URL = os.path.join(BASE_DIR, '/STATIC/DEV/static/')
+    STATIC_ROOT = os.path.join(BASE_DIR, 'STATICFILES/DEV')
+else:
+    STATIC_URL = '/static/'
+    MEIDA_ROOT = os.path.join(BASE_DIR, 'media')

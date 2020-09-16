@@ -1,10 +1,11 @@
 from rest_framework import status
+from rest_framework import generics
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.authtoken.models import Token
-from rest_framework.permissions import IsAuthenticated
 from .models import Customers
 from .serializers import CustomerSerializer
+
 
 
 class CustomerCreate(APIView):
@@ -23,3 +24,16 @@ class CustomerCreate(APIView):
                 return Response(json, status=status.HTTP_201_CREATED)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class CustomersList(APIView):
+
+    def get(self, request):
+        customers_list = Customers.objects.all()
+        serializer = CustomerSerializer(customers_list, many=True)
+        return Response({"articles": serializer.data})
+
+
+
+
+
