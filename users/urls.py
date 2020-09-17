@@ -1,9 +1,15 @@
-from django.urls import include, path
+from django.urls import include, path, re_path
+from rest_framework import routers
+from .views import CustomerCreate, StarsList, StarsViewSet
 
-from .views import CustomerCreate, CustomersList
+router = routers.DefaultRouter()
+router.register(r'stars', StarsViewSet)
 
 
 urlpatterns = [
-    path('create', CustomerCreate.as_view(), name='customer-create'),
-    path('customer/getlist/', CustomersList.as_view()),
+    path('', include(router.urls)),
+    path('api-auth/', include('rest_framework.urls', namespace='rest_framework')),
+    path('create/', CustomerCreate.as_view(), name=None),
+    path('star/getlist/', StarsList.as_view(), name=None),
+
 ]

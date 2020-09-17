@@ -44,27 +44,26 @@ class Categories(models.Model):
     cat_name = models.CharField(name='cat_name', unique=True, db_index=True, max_length=128)
 
     def __str__(self):
-        return self.cat_name
+        return "{}".format(self.cat_name)
 
     class Meta:
         verbose_name = 'category'
         verbose_name_plural = 'categories'
 
 
-class Rating(models.Model):
+class Ratings(models.Model):
     """
     Модель рейтинга
      rate - рейтинг
     """
-    rate = models.IntegerField(name='rate', db_index=True, default=5)
+    rating = models.IntegerField(name='rating', db_index=True, default=5, unique=True)
 
     def __str__(self):
-        return str(self.rate)
+        return "{}".format(self.rating)
 
     class Meta:
-        verbose_name = 'rate'
-        verbose_name_plural = 'rates'
-
+        verbose_name = 'rating'
+        verbose_name_plural = 'ratings'
 
 
 class Stars(Users):
@@ -75,12 +74,13 @@ class Stars(Users):
      rate - отсылка к модели Рейтинга
     """
     price = models.DecimalField(name='price', max_digits=9, decimal_places=2)
-    cat_name = models.ForeignKey(Categories, to_field='id', on_delete=models.CASCADE)
-    rate = models.ForeignKey(Rating, to_field='id', on_delete=models.CASCADE)
+    cat_name_id = models.ForeignKey(Categories, to_field='id', on_delete=models.CASCADE)
+    rating_id = models.ForeignKey(Ratings, to_field='id', on_delete=models.CASCADE)
 
     class Meta:
         verbose_name = 'Star'
         verbose_name_plural = 'Stars'
+
 
 
 

@@ -1,10 +1,10 @@
-from rest_framework import status
-from rest_framework import generics
+from rest_framework import status, viewsets
+from rest_framework.generics import ListAPIView
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.authtoken.models import Token
-from .models import Customers
-from .serializers import CustomerSerializer
+from .models import Customers, Stars
+from .serializers import CustomerSerializer, StarSerializer
 
 
 
@@ -26,12 +26,22 @@ class CustomerCreate(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class CustomersList(APIView):
+class StarsViewSet(viewsets.ModelViewSet):
+    queryset = Stars.objects.all()
+    serializer_class = StarSerializer
 
-    def get(self, request):
-        customers_list = Customers.objects.all()
-        serializer = CustomerSerializer(customers_list, many=True)
-        return Response({"articles": serializer.data})
+
+class StarsList(APIView):
+
+    def get(self, request, format='json'):
+        stars_list = Stars.objects.all()
+        serializer = StarSerializer(stars_list, many=True)
+        json = serializer.data
+        return Response(json, status=status.HTTP_200_OK)
+
+
+
+
 
 
 
