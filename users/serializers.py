@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 
-from .models import Customers, Stars, Users
+from .models import Customers, Stars, Users, Ratings
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -26,10 +26,6 @@ class UserSerializer(serializers.ModelSerializer):
 
 class CustomerSerializer(serializers.ModelSerializer):
 
-    # date_of_birth = serializers.DateField(
-    #     validators=[UniqueValidator(queryset=Customers.objects.all())]
-    # )
-    #
     class Meta:
         model = Customers
         fields = ('username', 'phone', 'email', 'password', 'date_of_birth')
@@ -85,3 +81,10 @@ class StarSerializer(serializers.ModelSerializer):
         star.set_password(validated_data['password'])
         star.save()
         return star
+
+
+class RatingSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Ratings
+        fields = ('rating', 'adresat', 'adresant')

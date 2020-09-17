@@ -1,20 +1,29 @@
 from django.contrib import admin
-from .models import Stars, Customers, Categories, Ratings
+from .models import Stars, Customers, Categories
 
 
 class StarsAdmin(admin.ModelAdmin):
-    pass
+    list_display = ('username', 'rating_id', 'cat_name_id')
+    list_filter = ('rating_id', 'cat_name_id')
+    fieldsets = (
+        ('Инфорамция о Звезде',{
+            'fields': ('username', ('first_name', 'last_name'))
+        }),
+        ('Коммерческая информация', {
+            'fields': ('cat_name_id', 'price', 'rating_id')
+        }),
+    )
 
 
 class CustomersAdmin(admin.ModelAdmin):
-    pass
+    list_display = ('email', 'username', 'date_of_birth')
 
 
 class CategoryAdmin(admin.ModelAdmin):
-    pass
+    list_display = ('cat_name',)
 
 
 admin.site.register(Categories, CategoryAdmin)
 admin.site.register(Stars, StarsAdmin)
 admin.site.register(Customers, CustomersAdmin)
-admin.site.register(Ratings)
+

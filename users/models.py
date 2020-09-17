@@ -1,7 +1,7 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 
-# Create your models here.
+
 class Users(AbstractUser, models.Model):
     """
     Родительский класс для всех пользователей
@@ -56,7 +56,9 @@ class Ratings(models.Model):
     Модель рейтинга
      rate - рейтинг
     """
-    rating = models.IntegerField(name='rating', db_index=True, default=5, unique=True)
+    rating = models.IntegerField(name='rating', default=0)
+    adresat = models.ForeignKey(Customers, name='adresat', on_delete=models.CASCADE)
+    adresant = models.IntegerField(name='adresant', default=None)
 
     def __str__(self):
         return "{}".format(self.rating)
@@ -80,8 +82,6 @@ class Stars(Users):
     class Meta:
         verbose_name = 'Star'
         verbose_name_plural = 'Stars'
-
-
 
 
 

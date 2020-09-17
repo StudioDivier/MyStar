@@ -55,7 +55,7 @@ INSTALLED_APPS = [
     'api',
 ]
 
-AUTH_USER_MODEL = 'users.Customers'
+AUTH_USER_MODEL = 'users.Users'
 
 # REST_FRAMEWORK = {
 #     'DEFAULT_PERMISSION_CLASSES': (
