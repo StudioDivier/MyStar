@@ -1,15 +1,15 @@
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 
-from .models import Customers, Stars, Users, Ratings
+from .models import Customers, Stars, Users, Ratings, Orders
 
 
 class UserSerializer(serializers.ModelSerializer):
 
-    # username = serializers.CharField(
-    #     max_length=32,
-    #     validators=[UniqueValidator(queryset=Users.objects.all())]
-    #                                  )
+    username = serializers.CharField(
+        max_length=32,
+        validators=[UniqueValidator(queryset=Users.objects.all())]
+                                     )
     phone = serializers.IntegerField(
         validators=[UniqueValidator(queryset=Users.objects.all())]
     )
@@ -25,6 +25,23 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 class CustomerSerializer(serializers.ModelSerializer):
+    """
+    Сериализер для обработки даных Заказчиков
+    Добавлены валидоры на создание и обновление основных полей при регистрации
+    Переопределен меотод create
+    """
+    username = serializers.CharField(
+        max_length=32,
+        validators=[UniqueValidator(queryset=Users.objects.all())]
+                                     )
+    phone = serializers.IntegerField(
+        validators=[UniqueValidator(queryset=Users.objects.all())]
+    )
+    email = serializers.EmailField(
+        required=True,
+        validators=[UniqueValidator(queryset=Users.objects.all())]
+    )
+    password = serializers.CharField(min_length=8, write_only=True)
 
     class Meta:
         model = Customers
@@ -43,6 +60,11 @@ class CustomerSerializer(serializers.ModelSerializer):
 
 
 class StarSerializer(serializers.ModelSerializer):
+    """
+    Сериализер для обработки данных звезд
+    Добавлены валидоры на создание и обновление основных полей при регистрации
+    Переопределены методы create и update
+    """
 
     username = serializers.CharField(
         max_length=32,
@@ -68,7 +90,7 @@ class StarSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Stars
-        fields = ('username', 'password', 'phone', 'email', 'price', 'cat_name_id', 'rating')
+        fields = ('username', 'password', 'phone', 'email', 'price', 'cat_name_id', 'rating', 'is_star')
 
     def create(self, validated_data):
         star = Stars(
@@ -77,7 +99,8 @@ class StarSerializer(serializers.ModelSerializer):
             phone=validated_data['phone'],
             price=validated_data['price'],
             cat_name_id=validated_data['cat_name_id'],
-            rating_id=validated_data['rating']
+            rating=validated_data['rating'],
+            is_star=validated_data['is_star']
         )
         star.set_password(validated_data['password'])
         star.save()
@@ -91,7 +114,26 @@ class StarSerializer(serializers.ModelSerializer):
 
 
 class RatingSerializer(serializers.ModelSerializer):
+    """
+    Сериализер для обработки Рейтингов
+    """
 
     class Meta:
         model = Ratings
         fields = ('rating', 'adresat', 'adresant')
+
+
+class OrderSerializer(serializers.ModelSerializer):
+    """
+    Сериализер для обработки Заказов
+    переопределен метод update для обновление статуса заказа
+    """
+
+    class Meta:
+        model = Orders
+        fields = ('customer_id', 'star_id', 'order_price', 'ordering_time', 'for_whom', 'comment', 'status_order')
+
+    def update(self, instance, validated_data):
+        instance.price = validated_data.get('price', instance.price)
+        instance.save()
+        return instance
