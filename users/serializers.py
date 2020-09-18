@@ -6,10 +6,10 @@ from .models import Customers, Stars, Users, Ratings
 
 class UserSerializer(serializers.ModelSerializer):
 
-    username = serializers.CharField(
-        max_length=32,
-        validators=[UniqueValidator(queryset=Users.objects.all())]
-                                     )
+    # username = serializers.CharField(
+    #     max_length=32,
+    #     validators=[UniqueValidator(queryset=Users.objects.all())]
+    #                                  )
     phone = serializers.IntegerField(
         validators=[UniqueValidator(queryset=Users.objects.all())]
     )
@@ -21,7 +21,7 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Users
-        fields = ('username', 'phone', 'email', 'password')
+        fields = ('id', 'username', 'phone', 'email', 'password')
 
 
 class CustomerSerializer(serializers.ModelSerializer):
@@ -64,10 +64,11 @@ class StarSerializer(serializers.ModelSerializer):
         max_digits=9,
         decimal_places=2
     )
+    rating = serializers.IntegerField()
 
     class Meta:
         model = Stars
-        fields = ('username', 'phone', 'email', 'password', 'price', 'cat_name_id', 'rating_id')
+        fields = ('username', 'password', 'phone', 'email', 'price', 'cat_name_id', 'rating')
 
     def create(self, validated_data):
         star = Stars(
@@ -76,11 +77,17 @@ class StarSerializer(serializers.ModelSerializer):
             phone=validated_data['phone'],
             price=validated_data['price'],
             cat_name_id=validated_data['cat_name_id'],
-            rating_id=validated_data['rating_id']
+            rating_id=validated_data['rating']
         )
         star.set_password(validated_data['password'])
         star.save()
         return star
+
+    def update(self, instance, validated_data):
+        instance.price = validated_data.get('price', instance.price)
+        instance.rating = validated_data.get('rating', instance.rating)
+        instance.save()
+        return instance
 
 
 class RatingSerializer(serializers.ModelSerializer):

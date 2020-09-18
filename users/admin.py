@@ -3,14 +3,14 @@ from .models import Stars, Customers, Categories
 
 
 class StarsAdmin(admin.ModelAdmin):
-    list_display = ('username', 'rating_id', 'cat_name_id')
-    list_filter = ('rating_id', 'cat_name_id')
+    list_display = ('username', 'rating', 'cat_name_id')
+    list_filter = ('rating', 'cat_name_id')
     fieldsets = (
         ('Инфорамция о Звезде',{
             'fields': ('username', ('first_name', 'last_name'))
         }),
         ('Коммерческая информация', {
-            'fields': ('cat_name_id', 'price', 'rating_id')
+            'fields': ('cat_name_id', 'price', 'rating')
         }),
     )
 

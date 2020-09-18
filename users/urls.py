@@ -1,7 +1,7 @@
 from django.urls import include, path, re_path
 from rest_framework import routers
 from .views import (
-CustomerCreate, StarCreate, StarsList, StarsViewSet, RateStar, StarByCategory)
+CustomerCreate, StarCreate, StarsList, StarsViewSet, RateStar, StarByCategory, TestView)
 
 router = routers.DefaultRouter()
 router.register(r'stars', StarsViewSet)
@@ -14,6 +14,8 @@ urlpatterns = [
     path('star/create/', StarCreate.as_view(), name=None),
     path('star/getlist/', StarsList.as_view(), name=None),
     path('ratestar', RateStar.as_view(), name=None),
-    re_path('starlist/category', StarByCategory.as_view(), name=None)
+    path('starlist/category', StarByCategory.as_view(), name=None),
+
+    path('test', TestView.as_view(), name=None)
 
 ]

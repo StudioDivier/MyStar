@@ -56,7 +56,7 @@ class Ratings(models.Model):
     Модель рейтинга
      rate - рейтинг
     """
-    rating = models.IntegerField(name='rating', default=0)
+    rating = models.IntegerField(name='rating')
     adresat = models.ForeignKey(Customers, name='adresat', on_delete=models.CASCADE)
     adresant = models.IntegerField(name='adresant', default=None)
 
@@ -77,7 +77,7 @@ class Stars(Users):
     """
     price = models.DecimalField(name='price', max_digits=9, decimal_places=2)
     cat_name_id = models.ForeignKey(Categories, to_field='id', on_delete=models.CASCADE)
-    rating_id = models.ForeignKey(Ratings, to_field='id', on_delete=models.CASCADE)
+    rating = models.IntegerField(name='rating')
 
     class Meta:
         verbose_name = 'Star'

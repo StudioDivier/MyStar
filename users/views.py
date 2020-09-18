@@ -3,8 +3,10 @@ from rest_framework.generics import ListAPIView
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.authtoken.models import Token
-from .models import Customers, Stars, Ratings
-from .serializers import CustomerSerializer, StarSerializer, RatingSerializer
+from .models import Customers, Stars, Ratings, Users
+from .serializers import CustomerSerializer, StarSerializer, RatingSerializer, UserSerializer
+
+from math import ceil
 
 
 class CustomerCreate(APIView):
@@ -64,57 +66,82 @@ class StarsList(APIView):
         return Response(json, status=status.HTTP_200_OK)
 
 
-# class RateStar(ListAPIView):
-#     """
-#     Вьюшка для выставления рейтинга
-#     Этап:
-#         забираем все записи по айдишнику звезды
-#     Нужно:
-#         суммировать все рейтинги по записям и вставлять данные в звезду
-#     """
-#
-#     queryset = Ratings.objects.all()
-#     serializer_class = RatingSerializer
-#     filter_backends = (filters.SearchFilter,)
-#     search_fields = ('adresant',)
-
-
-class StarByCategory(ListAPIView):
+class StarByCategory(APIView):
     """
     Вьюшка для получения спсика звезд по айди категории
     """
-    serializer_class = StarSerializer
-    queryset = Stars.objects.all()
-    filter_fields = ('cat_name_id',)
-    lookup_field = 'cat_name_id'
+    def get(self, request, format='json'):
+        """
+        Получаем request вида:
 
-    # def get_queryset(self):
-    #     stars = self.kwargs['cat_name_id']
-    #     return Stars.objects.filter(cat_name_id_id=stars)
+        :param request:
+        :param format:
+        :return:
+        """
+        strarsest = Stars.objects.filter(cat_name_id=request.data['cat_name_id'])
+        serialstar = StarSerializer(strarsest, many=True)
+
+        stardata = serialstar.data
+        return Response(stardata, status=status.HTTP_200_OK)
 
 
 class RateStar(APIView):
     """
-    Вьюшка для обновления рейтинга звезды
+    Вьюшка для обновления рейтинга звезды 
     """
-    def get(self, request):
+    def put(self, request, format='json'):
+        """
+        Получаем Request вида:
+        {
+            "rating": "5",
+            "adresat": 1,
+            "adresant": 3
+        }, где
+            :param rating: int - сама оценка
+            :param adresat: int - id заказчика, который поставил оценку
+            :param adresant: int - id звезды, которой поставили оценку
+        1. Получаем QuerySet из таблицы Рейтинга по айди звезды
+           Суммируем все оценки и получаем среднее с округлением в большую сторону
+        2. Получаем QuerySet из таблицы Звезд по айди звезды
+           Записываем новый рейтинг
+        3. Response в зависимости от исхода
+        :return: 201 - успещная запись
+                 418 - не валидные данные
+                 404 - не валидные id
+        """
         res: int() = 0
-        serializtor = StarSerializer
-        queryset = Ratings.objects.filter(adresant=request.data['adresant'])
+        serializer = RatingSerializer(data=request.data)
+
+        if serializer.is_valid():
+            rating = serializer.save()
+            if rating:
+                # json = serializer.data
+                queryset = Ratings.objects.filter(adresant=request.data['adresant'])
+                serializtor = RatingSerializer(queryset, many=True)
+                json = serializtor.data
+
+                for i in range(len(json)):
+                    res += json[i]['rating']
+                uprate = ceil(res / len(json))
+
+                strarsest = Stars.objects.filter(users_ptr_id=request.data['adresant'])
+                serialstar = StarSerializer(data={'rating': uprate}, partial=True)
+                if serialstar.is_valid():
+                    return Response(status=status.HTTP_201_CREATED)
+
+                return Response(serializer.errors, status=status.HTTP_418_IM_A_TEAPOT)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+class TestView(APIView):
+    """
+    Временная тестовая вьюшка
+    """
+
+    def put(self, request, format='json'):
+        strarsest = Stars.objects.filter(cat_name_id=request.data['adresant'])
+        serialstar = StarSerializer(data={'rating': 3}, partial=True)
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
+        return Response(status=status.HTTP_200_OK)
