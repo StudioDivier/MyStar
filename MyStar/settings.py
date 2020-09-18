@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+
     # Applications
     'rest_framework',
     'rest_framework.authtoken',
@@ -97,6 +98,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'django.template.context_processors.media',
             ],
         },
     },
@@ -154,6 +156,19 @@ USE_TZ = True
 if DEBUG:
     STATIC_URL = os.path.join(BASE_DIR, '/STATIC/DEV/static/')
     STATIC_ROOT = os.path.join(BASE_DIR, 'STATICFILES/DEV')
+    MEDIA_ROOT = os.path.join(BASE_DIR, 'media/')
+    AVATAR_ROOT = os.path.join(BASE_DIR, 'media/avatars/')
+    VIDEO_ROOT = os.path.join(BASE_DIR, 'media/videos/')
+    MEDIA_URL = '/media/'
 else:
     STATIC_URL = '/static/'
     MEIDA_ROOT = os.path.join(BASE_DIR, 'media')
+
+
+# data for mailing service
+# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_USE_TLS = True
+EMAIL_HOST = 'mail.hosting.reg.ru'
+EMAIL_PORT = '587'
+EMAIL_HOST_USER = config.EMAIL_HOST_USER
+EMAIL_HOST_PASSWORD = config.EMAIL_HOST_PASSWORD

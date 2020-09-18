@@ -4,3 +4,4 @@ MyStar/config.py
 STATICFILES/
 api/migrations/
 users/migrations/
+media/
