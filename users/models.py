@@ -1,5 +1,7 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+from django.utils import timezone
+from django.conf import settings
 
 
 class Users(AbstractUser, models.Model):
@@ -9,11 +11,15 @@ class Users(AbstractUser, models.Model):
      phone - мобильный телефон пользователя
      email - эл.адрес пользователя
      password - пароль пользователя
+     avatar - аватар пользователя
+     is_star - флаг для чека звезды (0,1)
     """
     username = models.CharField(name='username', max_length=128, db_index=True, unique=True)
     phone = models.BigIntegerField(name='phone', unique=True)
     email = models.EmailField(name='email', unique=True)
     password = models.CharField(name='password', max_length=128)
+    avatar = models.FilePathField(name='avatar', path=settings.AVATAR_ROOT, default='/1.jpg')
+    is_star = models.BooleanField(name='is_star', default=0)
 
     def __str__(self):
         return self.email
@@ -55,6 +61,8 @@ class Ratings(models.Model):
     """
     Модель рейтинга
      rate - рейтинг
+     adresat - От кого (заказчик)
+     adresant - Кому (Звезда)
     """
     rating = models.IntegerField(name='rating')
     adresat = models.ForeignKey(Customers, name='adresat', on_delete=models.CASCADE)
@@ -72,16 +80,49 @@ class Stars(Users):
     """
     Модель для Исполнителей (звезд)
      price - цена звезды
-     cat_name - отсылка к модели Катгории
-     rate - отсылка к модели Рейтинга
+     cat_name_id - id Катгории
+     rating - отсылка к модели Рейтинга
+     video_hi - видео приветствие от звезды
     """
     price = models.DecimalField(name='price', max_digits=9, decimal_places=2)
     cat_name_id = models.ForeignKey(Categories, to_field='id', on_delete=models.CASCADE)
     rating = models.IntegerField(name='rating')
+    video_hi = models.FilePathField(name='video_hi', path=settings.VIDEO_ROOT, default='/1.jpg')
 
     class Meta:
         verbose_name = 'Star'
         verbose_name_plural = 'Stars'
+
+
+class Orders(models.Model):
+    """
+    Модель для Заказов
+      customer_id - id заказчика
+      star_id - id звезды
+      order_price - цена заказа
+      ordering_time - время заказа
+      for_whom - для кого
+      comment - колмментарий к заказы
+      status_order - статус заказа (0 - New, 1 - Accepted, 2 - Completed)
+    """
+    ORDER_STATUS = (
+        ('New', 'Новый заказ'),
+        ('Accepted', 'Заказ принят'),
+        ('Completed', 'Заказ завершен')
+    )
+
+    customer_id = models.ForeignKey(Customers, name='customer_id', on_delete=models.CASCADE)
+    star_id = models.ForeignKey(Stars, name='star_id', on_delete=models.CASCADE)
+    order_price = models.DecimalField(name='order_price', max_digits=9, decimal_places=2)
+    ordering_time = models.DateTimeField(name='ordering_time', default=timezone.now)
+    for_whom = models.CharField(name='for_whom', max_length=128)
+    comment = models.TextField(name='comment')
+    status_order = models.IntegerField(name='status_order', default=0)
+
+
+    class Meta:
+        verbose_name = 'Order'
+        verbose_name_plural = 'Orders'
 
 
 
