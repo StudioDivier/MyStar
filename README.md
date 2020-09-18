@@ -21,4 +21,6 @@ http://127.0.0.1:8000/api/starlist/category - получить список зв
 http://127.0.0.1:8000/api/ratestar - проголосвать за звезду
 ![](readme/staruprate.png)
 
+http://127.0.0.1:8000/api/order - отправить заказ
+![](readme/ordersend.png)
 
