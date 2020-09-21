@@ -53,7 +53,6 @@ INSTALLED_APPS = [
     'rest_auth',
     # Apps
     'users',
-    'api',
 ]
 
 AUTH_USER_MODEL = 'users.Users'
