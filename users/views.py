@@ -226,7 +226,55 @@ class OrderView(APIView):
                 )
                 send_mail(SUBJECT, TEXT_MESASGE, settings.EMAIL_HOST_USER, [star_email])
                 return Response(status=status.HTTP_201_CREATED)
-        return Response(status=status.HTTP_400_BAD_REQUEST)
+        return Response(status=status.HTTP_418_IM_A_TEAPOT)
+
+
+class PersonalAccount(APIView):
+    """
+    Вьюшка личного кабинета
+    """
+    def get(self, request, format='json'):
+        """
+        Получаем request вида:
+        {
+            "user_id": "1",
+            "is_star": 0
+        }, где
+            :param user_id: - id пользователя
+            :param is_star: - статус звезды (0,1)
+
+        :return:
+        """
+        if request.data['is_star'] == False:
+            cust_sest = Customers.objects.filter(users_ptr_id=request.data['user_id'])
+            serial_cust = CustomerSerializer(cust_sest, many=True)
+            json = serial_cust.data
+
+            order_set = Orders.objects.filter(customer_id=request.data['user_id'])
+            serial_orders = OrderSerializer(order_set, many=True)
+
+            orders = {
+                'orders': serial_orders.data
+            }
+
+            json.append(orders)
+
+        elif request.data['is_star'] == True:
+            star_set = Stars.objects.filter(users_ptr_id=request.data['user_id'])
+            star_cust = StarSerializer(star_set, many=True)
+            json = star_cust.data
+
+            order_set = Orders.objects.filter(star_id_id=request.data['user_id'])
+            serial_orders = OrderSerializer(order_set, many=True)
+
+            orders = {
+                'orders': serial_orders.data
+            }
+
+            json.append(orders)
+        else:
+            return Response("No data invalid", status=status.HTTP_400_BAD_REQUEST)
+        return Response(json, status=status.HTTP_200_OK)
 
 
 class TestView(APIView):
@@ -240,6 +288,12 @@ class TestView(APIView):
         strarsest = Stars.objects.filter(cat_name_id=request.data['adresant'])
         serialstar = StarSerializer(data={'rating': 3}, partial=True)
         return Response(status=status.HTTP_200_OK)
+
+
+class Password(APIView):
+
+    def post(self, request, format='json'):
+        cust_set = Customers.objects.filter(username=request.data['username'])
 
 
 

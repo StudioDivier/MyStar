@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/3.1/ref/settings/
 
 from pathlib import Path
 from . import config
+from .config import OAUTHDATA
 import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -51,6 +52,12 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework.authtoken',
     'rest_auth',
+    'django_rest_passwordreset',
+    'yandex_checkout',
+
+    'oauth2_provider',
+    'social_django',
+    'rest_framework_social_oauth2',
     # Apps
     'users',
 ]
@@ -67,6 +74,34 @@ AUTH_USER_MODEL = 'users.Users'
 #         'rest_framework.authentication.BasicAuthentication',
 #     ),
 # }
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        # 'oauth2_provider.ext.rest_framework.OAuth2Authentication',  # django-oauth-toolkit < 1.0.0
+        'oauth2_provider.contrib.rest_framework.OAuth2Authentication',  # django-oauth-toolkit >= 1.0.0
+        'rest_framework_social_oauth2.authentication.SocialAuthentication',
+    ),
+    'EXCEPTION_HANDLER': 'django_rest_logger.handlers.rest_exception_handler',
+}
+
+AUTHENTICATION_BACKENDS = (
+    # facebook
+    'social_core.backends.facebook.FacebookAppOAuth2',
+    'social_core.backends.facebook.FacebookOAuth2',
+    #  google
+    'social_core.backends.google.GoogleOAuth2',
+    # vk
+    'social_core.backends.vk.VKOAuth2',
+    'social_core.backends.vk.VKAppOAuth2',
+    # yandex
+    'social_core.backends.yandex.YandexOAuth2',
+    # mail
+    'social_core.backends.mailru.MailruOAuth2',
+    # OK
+    'social_core.backends.odnoklassniki.OdnoklassnikiOAuth2',
+
+    'rest_framework_social_oauth2.backends.DjangoOAuth2',
+    'django.contrib.auth.backends.ModelBackend',
+)
 
 REST_USE_JWT = True
 
@@ -98,6 +133,9 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
                 'django.template.context_processors.media',
+                'social_django.context_processors.backends',
+                'social_django.context_processors.login_redirect',
+
             ],
         },
     },
@@ -165,9 +203,48 @@ else:
 
 
 # data for mailing service
-# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_USE_TLS = True
 EMAIL_HOST = 'mail.hosting.reg.ru'
 EMAIL_PORT = '587'
 EMAIL_HOST_USER = config.EMAIL_HOST_USER
 EMAIL_HOST_PASSWORD = config.EMAIL_HOST_PASSWORD
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
+# yandex kassa
+
+# oAuth2
+# vk data
+SOCIAL_AUTH_VK_OAUTH2_KEY = OAUTHDATA.SOCIAL_AUTH_VK_OAUTH2_KEY
+SOCIAL_AUTH_VK_OAUTH2_SECRET = OAUTHDATA.SOCIAL_AUTH_VK_OAUTH2_SECRET
+# google data
+SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = OAUTHDATA.SOCIAL_AUTH_GOOGLE_OAUTH2_KEY
+SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = OAUTHDATA.SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET
+# fb data
+SOCIAL_AUTH_FB_OAUTH2_KEY = OAUTHDATA.SOCIAL_AUTH_FB_OAUTH2_KEY
+SOCIAL_AUTH_FB_OAUTH2_SECRET = OAUTHDATA.SOCIAL_AUTH_FB_OAUTH2_SECRET
+# yandex data
+SOCIAL_AUTH_YANDEX_OAUTH2_KEY = OAUTHDATA.SOCIAL_AUTH_YANDEX_OAUTH2_KEY
+SOCIAL_AUTH_YANDEX_OAUTH2_SECRET = OAUTHDATA.SOCIAL_AUTH_YANDEX_OAUTH2_SECRET
+# mail data
+SOCIAL_AUTH_MAIL_OAUTH2_KEY = OAUTHDATA.SOCIAL_AUTH_MAIL_OAUTH2_KEY
+SOCIAL_AUTH_MAIL_OAUTH2_SECRET = OAUTHDATA.SOCIAL_AUTH_MAIL_OAUTH2_SECRET
+# ok data
+SOCIAL_AUTH_OK_OAUTH2_KEY = OAUTHDATA.SOCIAL_AUTH_OK_OAUTH2_KEY
+SOCIAL_AUTH_OK_OAUTH2_SECRET = OAUTHDATA.SOCIAL_AUTH_OK_OAUTH2_SECRET
+
+if DEBUG:
+    LOGGING = config.LOGGER.DEV
+
+    DEFAULT_LOGGER = 'django_rest_logger'
+
+    LOGGER_EXCEPTION = DEFAULT_LOGGER
+    LOGGER_ERROR = DEFAULT_LOGGER
+    LOGGER_WARNING = DEFAULT_LOGGER
+else:
+    LOGGING = config.LOGGER.PROD
+
+    DEFAULT_LOGGER = 'raven'
+
+    LOGGER_EXCEPTION = DEFAULT_LOGGER
+    LOGGER_ERROR = DEFAULT_LOGGER
+    LOGGER_WARNING = DEFAULT_LOGGER
