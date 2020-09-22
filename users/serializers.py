@@ -1,7 +1,8 @@
+from django.contrib.auth import authenticate
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 
-from .models import Customers, Stars, Users, Ratings, Orders
+from .models import Customers, Stars, Users, Ratings, Orders, Categories
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -45,7 +46,7 @@ class CustomerSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Customers
-        fields = ('username', 'phone', 'email', 'password', 'date_of_birth')
+        fields = ('username', 'phone', 'email', 'password', 'date_of_birth', 'is_star')
 
     def create(self, validated_data):
         customer = Customers(
@@ -123,6 +124,13 @@ class RatingSerializer(serializers.ModelSerializer):
         fields = ('rating', 'adresat', 'adresant')
 
 
+class CategorySerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Categories
+        fields = ('id', 'cat_name', )
+
+
 class OrderSerializer(serializers.ModelSerializer):
     """
     Сериализер для обработки Заказов
@@ -131,9 +139,95 @@ class OrderSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Orders
-        fields = ('customer_id', 'star_id', 'order_price', 'ordering_time', 'for_whom', 'comment', 'status_order')
+        fields = ('customer_id', 'star_id', 'payment_id', 'order_price',
+                  'ordering_time', 'for_whom', 'comment', 'status_order')
 
     def update(self, instance, validated_data):
-        instance.price = validated_data.get('price', instance.price)
+        instance.price = validated_data.get('order_price', instance.price)
+        instance.payment_id = validated_data.get('payment_id', instance.payment_id)
         instance.save()
         return instance
+
+
+class RegistrationSerializer(serializers.ModelSerializer):
+    """
+    Creates a new user.
+    Email, username, and password are required.
+    Returns a JSON web token.
+    """
+
+    username = serializers.CharField(
+        max_length=32,
+        validators=[UniqueValidator(queryset=Users.objects.all())]
+                                     )
+    phone = serializers.IntegerField(
+        validators=[UniqueValidator(queryset=Users.objects.all())]
+    )
+    email = serializers.EmailField(
+        required=True,
+        validators=[UniqueValidator(queryset=Users.objects.all())]
+    )
+    # The password must be validated and should not be read by the client
+    password = serializers.CharField(
+        max_length=128,
+        min_length=8,
+        write_only=True,
+    )
+
+    # The client should not be able to send a token along with a registration
+    # request. Making `token` read-only handles that for us.
+    token = serializers.CharField(max_length=255, read_only=True)
+
+    class Meta:
+        model = Customers
+        fields = ('username', 'phone', 'email', 'password', 'date_of_birth', 'is_star', 'token',)
+
+    def create(self, validated_data):
+        return Customers.objects.create_user(**validated_data)
+
+
+class LoginSerializer(serializers.Serializer):
+    """
+    Authenticates an existing user.
+    Email and password are required.
+    Returns a JSON web token.
+    """
+    email = serializers.EmailField(write_only=True)
+    password = serializers.CharField(max_length=128, write_only=True)
+
+    # Ignore these fields if they are included in the request.
+    username = serializers.CharField(max_length=255, read_only=True)
+    # token = serializers.CharField(max_length=255, read_only=True)
+
+    def validate(self, data):
+        """
+        Validates user data.
+        """
+        email = data.get('email', None)
+        password = data.get('password', None)
+
+        if email is None:
+            raise serializers.ValidationError(
+                'An email address is required to log in.'
+            )
+
+        if password is None:
+            raise serializers.ValidationError(
+                'A password is required to log in.'
+            )
+
+        user = authenticate(username=email, password=password)
+
+        if user is None:
+            raise serializers.ValidationError(
+                'A user with this email and password was not found.'
+            )
+
+        if not user.is_active:
+            raise serializers.ValidationError(
+                'This user has been deactivated.'
+            )
+
+        return [{
+            'token': user.token,
+        }]

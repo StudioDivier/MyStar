@@ -3,6 +3,8 @@
 *End-points*
 
 
+
+
 http://127.0.0.1:8000/api/customer/create/ - регистрация пользователя
 ![](readme/create.png)
 

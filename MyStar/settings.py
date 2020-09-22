@@ -28,8 +28,9 @@ SECRET_KEY = config.sk
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 # '192.168.1.131'
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['192.168.1.131', '127.0.0.1']
 SITE_ID = 1
+
 
 
 # Application definition
@@ -49,6 +50,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 
     # Applications
+    'corsheaders',
     'rest_framework',
     'rest_framework.authtoken',
     'rest_auth',
@@ -75,12 +77,17 @@ AUTH_USER_MODEL = 'users.Users'
 #     ),
 # }
 REST_FRAMEWORK = {
+    'DEFAULT_PERMISSION_CLASSES': (
+        'rest_framework.permissions.IsAuthenticated',
+    ),
     'DEFAULT_AUTHENTICATION_CLASSES': (
         # 'oauth2_provider.ext.rest_framework.OAuth2Authentication',  # django-oauth-toolkit < 1.0.0
         'oauth2_provider.contrib.rest_framework.OAuth2Authentication',  # django-oauth-toolkit >= 1.0.0
         'rest_framework_social_oauth2.authentication.SocialAuthentication',
+        'rest_framework.authentication.BasicAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
     ),
-    'EXCEPTION_HANDLER': 'django_rest_logger.handlers.rest_exception_handler',
+    # 'EXCEPTION_HANDLER': 'django_rest_logger.handlers.rest_exception_handler',
 }
 
 AUTHENTICATION_BACKENDS = (
@@ -109,6 +116,7 @@ REST_USE_JWT = True
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -173,6 +181,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 # Internationalization
 # https://docs.djangoproject.com/en/3.1/topics/i18n/
+CORS_ORIGIN_ALLOW_ALL = True
 
 LANGUAGE_CODE = 'en-us'
 
@@ -232,19 +241,19 @@ SOCIAL_AUTH_MAIL_OAUTH2_SECRET = OAUTHDATA.SOCIAL_AUTH_MAIL_OAUTH2_SECRET
 SOCIAL_AUTH_OK_OAUTH2_KEY = OAUTHDATA.SOCIAL_AUTH_OK_OAUTH2_KEY
 SOCIAL_AUTH_OK_OAUTH2_SECRET = OAUTHDATA.SOCIAL_AUTH_OK_OAUTH2_SECRET
 
-if DEBUG:
-    LOGGING = config.LOGGER.DEV
-
-    DEFAULT_LOGGER = 'django_rest_logger'
-
-    LOGGER_EXCEPTION = DEFAULT_LOGGER
-    LOGGER_ERROR = DEFAULT_LOGGER
-    LOGGER_WARNING = DEFAULT_LOGGER
-else:
-    LOGGING = config.LOGGER.PROD
-
-    DEFAULT_LOGGER = 'raven'
-
-    LOGGER_EXCEPTION = DEFAULT_LOGGER
-    LOGGER_ERROR = DEFAULT_LOGGER
-    LOGGER_WARNING = DEFAULT_LOGGER
+# if DEBUG:
+#     LOGGING = config.LOGGER.DEV
+#
+#     DEFAULT_LOGGER = 'django_rest_logger'
+#
+#     LOGGER_EXCEPTION = DEFAULT_LOGGER
+#     LOGGER_ERROR = DEFAULT_LOGGER
+#     LOGGER_WARNING = DEFAULT_LOGGER
+# else:
+#     LOGGING = config.LOGGER.PROD
+#
+#     DEFAULT_LOGGER = 'raven'
+#
+#     LOGGER_EXCEPTION = DEFAULT_LOGGER
+#     LOGGER_ERROR = DEFAULT_LOGGER
+#     LOGGER_WARNING = DEFAULT_LOGGER

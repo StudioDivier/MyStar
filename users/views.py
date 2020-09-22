@@ -1,56 +1,110 @@
 from math import ceil
+import uuid
 
+from django.contrib.auth import login
 from django.core.mail import send_mail
 from django.conf import settings
 from rest_framework import status, viewsets, filters
 from rest_framework.generics import ListAPIView
+from rest_framework.permissions import AllowAny
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.authtoken.models import Token
 
-from .models import Customers, Stars, Ratings, Orders
+from .models import Customers, Stars, Ratings, Orders, Users, Categories
+from .serializers import LoginSerializer, UserSerializer, RegistrationSerializer, CategorySerializer
 from .serializers import CustomerSerializer, StarSerializer, RatingSerializer, OrderSerializer
-
 
 
 class CustomerCreate(APIView):
     """
-    Вьюшка для создания пользователя(заказчика) с токеном
+    Registers a new user.
     """
-    def post(self, request, format='json'):
+    permission_classes = [AllowAny]
+    serializer_class = RegistrationSerializer
+
+    def post(self, request):
         """
-        Принимаем request Вида:
-        {
-            "username": "ValyMalya",
-            "phone": 9942638783,
-            "email": "ValyMalya@rambler.com",
-            "password": "ValyMalya666",
-            "date_of_birth": "1968-08-05"
-        }, где
-            :param username: - ник пользователя
-            :param phone: - номер телефона
-            :param email: - электронная почта пользователя
-            :param password: - пароль (в бд храним хэш)
-            :param date_of_birth: - дата рождения пользователя
-        1. Создаем запись в бд из данных request через сериализер
-        2. Добавляем токен ьпользователю
-        :return: Response 201, если запись создана. Response 400, если данные не валидные
+        Creates a new User object.
+        Username, email, and password are required.
+        Returns a JSON web token.
         """
-        serializer = CustomerSerializer(data=request.data)
-        if serializer.is_valid():
-            customer = serializer.save()
-            if customer:
-                token = Token.objects.create(user=customer)
-                json = serializer.data
-                json['token'] = token.key
-                return Response(json, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
+        return Response(
+            {
+                'token': serializer.data.get('token', None),
+            },
+            status=status.HTTP_201_CREATED,
+        )
+    # """
+    # Вьюшка для создания пользователя(заказчика) с токеном
+    # """
+    # def post(self, request, format='json'):
+    #     """
+    #     Принимаем request Вида:
+    #     {
+    #         "username": "ValyMalya",
+    #         "phone": 9942638783,
+    #         "email": "ValyMalya@rambler.com",
+    #         "password": "ValyMalya666",
+    #         "date_of_birth": "1968-08-05"
+    #     }, где
+    #         :param username: - ник пользователя
+    #         :param phone: - номер телефона
+    #         :param email: - электронная почта пользователя
+    #         :param password: - пароль (в бд храним хэш)
+    #         :param date_of_birth: - дата рождения пользователя
+    #     1. Создаем запись в бд из данных request через сериализер
+    #     2. Добавляем токен ьпользователю
+    #     :return: Response 201, если запись создана. Response 400, если данные не валидные
+    #     """
+    #     serializer = CustomerSerializer(data=request.data)
+    #     if serializer.is_valid():
+    #         customer = serializer.save()
+    #         if customer:
+    #             token = Token.objects.create(user=customer)
+    #             json = serializer.data
+    #             json['token'] = token.key
+    #             return Response(json, status=status.HTTP_201_CREATED)
+    #         # return Response(serializer.errors, status=status.HTTP_418_IM_A_TEAPOT)
+    #     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class LoginAPIView(APIView):
+    """
+    Logs in an existing user.
+    """
+    permission_classes = [AllowAny]
+    serializer_class = LoginSerializer
+
+    def post(self, request):
+        """
+        Checks is user exists.
+        Email and password are required.
+        Returns a JSON web token.
+        """
+        serializer = self.serializer_class(data=request.data)
+        if serializer.is_valid(raise_exception=True):
+            cust_set = Customers.objects.get(email=request.data['email'])
+            json = {
+                'username': cust_set.username,
+                'phone': cust_set.phone,
+                'is_star': cust_set.is_star,
+                'email': cust_set.email,
+                'avatar': cust_set.avatar,
+                'token': cust_set.token
+            }
+            return Response(json, status=status.HTTP_200_OK)
 
 
 class StarCreate(APIView):
     """
     Вьюшка для создания звезды с токеном
     """
+    permission_classes = [AllowAny]
     def post(self, request, format='json'):
         """
         Принимаем request Вида:
@@ -87,24 +141,25 @@ class StarCreate(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class StarsViewSet(viewsets.ModelViewSet):
+class StarById(APIView):
     """
-    ViewSet для routers
-    Основная вьюшка для рутинга
-        - получить всех звезд
-        - получить звезду по айди
-        - PUT
-        - DELETE
+    Вьюшка для получения звезды по айди
     """
-    queryset = Stars.objects.all()
-    serializer_class = StarSerializer
+    permission_classes = [AllowAny]
+
+    def get(self, request, format='json'):
+        stars_set = Stars.objects.get(users_ptr_id=request.data['star_id'])
+        serializer_class = StarSerializer(stars_set)
+        json = serializer_class.data
+        return Response(json, status=status.HTTP_200_OK)
 
 
 class StarsList(APIView):
     """
-    Получаем список звезд, через поля сериализатора
-        (отличается выводом данных)
+    Получаем список всех звезд
     """
+    permission_classes = [AllowAny]
+
     def get(self, request, format='json'):
         stars_list = Stars.objects.all()
         serializer = StarSerializer(stars_list, many=True)
@@ -116,6 +171,7 @@ class StarByCategory(APIView):
     """
     Вьюшка для получения спсика звезд по айди категории
     """
+    permission_classes = [AllowAny]
     def get(self, request, format='json'):
         """
         Получаем request вида:
@@ -138,6 +194,7 @@ class RateStar(APIView):
     """
     Вьюшка для обновления рейтинга звезды 
     """
+    permission_classes = [AllowAny]
     def put(self, request, format='json'):
         """
         Получаем Request вида:
@@ -173,12 +230,14 @@ class RateStar(APIView):
                     res += json[i]['rating']
                 uprate = ceil(res / len(json))
 
-                strarsest = Stars.objects.filter(users_ptr_id=request.data['adresant'])
-                serialstar = StarSerializer(data={'rating': uprate}, partial=True)
-                if serialstar.is_valid():
-                    return Response(status=status.HTTP_201_CREATED)
+                starset = Stars.objects.get(users_ptr_id=request.data['adresant'])
+                starset.rating = str(uprate)
+                starset.save()
+                # serialstar = StarSerializer(data=starset, partial=True)
+                # if serialstar.is_valid():
+                return Response(status=status.HTTP_201_CREATED)
 
-                return Response(serializer.errors, status=status.HTTP_418_IM_A_TEAPOT)
+                # return Response(serializer.errors, status=status.HTTP_418_IM_A_TEAPOT)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -187,6 +246,7 @@ class OrderView(APIView):
     """
     Вьюшка для регистрации заказа и отправки уведомления на почту звезды
     """
+    permission_classes = [AllowAny]
     def post(self, request, format='json'):
         """
         Получаем request вида:
@@ -210,12 +270,16 @@ class OrderView(APIView):
         4. Отправляем письмо на почту звезде с уведомлением о заказе
         :return: Response 201, если все хорошо. Response 400, если данные не валидные
         """
+        # payment_id = str(uuid.uuid4())
+        # json = request.data
+        # json['payment_id'] = payment_id
         order_serializer = OrderSerializer(data=request.data)
         if order_serializer.is_valid():
             order = order_serializer.save()
             if order:
                 star_queryset = Stars.objects.filter(users_ptr_id=request.data['star_id'])
                 star_serializer = StarSerializer(star_queryset, many=True)
+
                 star = star_serializer.data
                 star_email = star[0]['email']
                 star_username = star[0]['username']
@@ -229,10 +293,66 @@ class OrderView(APIView):
         return Response(status=status.HTTP_418_IM_A_TEAPOT)
 
 
+class StarOrderAccepted(APIView):
+    """
+    Вьюшка принятия или отклонения заяки на заказ со стороны звезды
+    """
+    permission_classes = [AllowAny]
+    def post(self, request, format='json'):
+        """
+        {
+            'order_id'
+            'accept' accept/reject
+        }
+        :param request:
+        :param format:
+        :return:
+        """
+        order_set = Orders.objects.get(id=request.data['order_id'])
+        customer = Customers.objects.get(users_ptr_id=order_set.customer_id)
+        customer_email = customer.email
+        customer_username = customer.username
+        if request.data['accept'] == 'accept':
+            order_set.payment_id = str(uuid.uuid4())
+            order_set.status_order = 1
+            order_set.save()
+            SUBJECT = 'MySTAR: Уведомление!'
+            TEXT_MESASGE = 'Уважаемый {}, ваш заказ был принят. ' \
+                           'Приходите в MySTAR, чтобы оплатить его.'.format(
+                customer_username
+            )
+        elif request.data['accept'] == 'reject':
+            order_set.payment_id = ''
+            order_set.status_order = -1
+            order_set.save()
+            SUBJECT = 'MySTAR: Уведомление!'
+            TEXT_MESASGE = 'Уважаемый {}, ваш заказ был отклонён.' \
+                           'Приходите заказывать еще поздравления в MySTAR'.format(
+                customer_username
+            )
+        else:
+            return Response({'Order status is not valid'}, status=status.HTTP_400_BAD_REQUEST)
+        send_mail(SUBJECT, TEXT_MESASGE, settings.EMAIL_HOST_USER, [customer_email])
+        return Response(status=status.HTTP_201_CREATED)
+
+
+class ListCategory(APIView):
+
+    permission_classes = [AllowAny]
+
+    def get(self, request, format='json'):
+
+        cat_set = Categories.objects.all()
+        cat_serial = CategorySerializer(cat_set, many=True)
+        json = cat_serial.data
+        return Response(json, status=status.HTTP_200_OK)
+
+
 class PersonalAccount(APIView):
     """
     Вьюшка личного кабинета
     """
+    permission_classes = [AllowAny]
     def get(self, request, format='json'):
         """
         Получаем request вида:
@@ -281,19 +401,14 @@ class TestView(APIView):
     """
     Временная тестовая вьюшка
     """
-    def put(self, request, format='json'):
+    permission_classes = [AllowAny]
+    def get(self, request, format='json'):
         """
         Вьюшка для проверки гипотиз и доказательства теорем
         """
-        strarsest = Stars.objects.filter(cat_name_id=request.data['adresant'])
-        serialstar = StarSerializer(data={'rating': 3}, partial=True)
-        return Response(status=status.HTTP_200_OK)
-
-
-class Password(APIView):
-
-    def post(self, request, format='json'):
-        cust_set = Customers.objects.filter(username=request.data['username'])
+        payment_id = request.data['payment_id']
+        value = request.data['value']
+        return Response(data = str(value))
 
 
 

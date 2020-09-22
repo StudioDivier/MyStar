@@ -1,5 +1,13 @@
-from django.contrib.auth.models import AbstractUser
+import jwt
+
+from datetime import datetime
+from datetime import timedelta
+
+from django.contrib.auth.models import AbstractBaseUser,AbstractUser
+from django.contrib.auth.models import PermissionsMixin
+from django.core import validators
 from django.db import models
+from django.contrib.auth.models import BaseUserManager
 from django.utils import timezone
 from django.conf import settings
 
@@ -8,6 +16,34 @@ from django.urls import reverse
 from django_rest_passwordreset.signals import reset_password_token_created
 from django.core.mail import send_mail
 from MyStar import config
+
+
+class UserManager(BaseUserManager):
+    """
+    Django требует, чтобы пользовательские `User`
+    определяли свой собственный класс Manager.
+    Унаследовав от BaseUserManager, мы получаем много кода,
+    используемого Django для создания `User`.
+
+    Все, что нам нужно сделать, это переопределить функцию
+    `create_user`, которую мы будем использовать
+    для создания объектов `User`.
+    """
+
+    def create_user(self, username, email, password=None, **extra_fields):
+        if not username:
+            raise ValueError('Указанное имя пользователя должно быть установлено')
+
+        if not email:
+            raise ValueError('Данный адрес электронной почты должен быть установлен')
+
+        email = self.normalize_email(email)
+        user = self.model(username=username, email=email, **extra_fields)
+        user.set_password(password)
+        user.save(using=self._db)
+
+        return user
+
 
 class Users(AbstractUser, models.Model):
     """
@@ -26,12 +62,43 @@ class Users(AbstractUser, models.Model):
     avatar = models.FilePathField(name='avatar', path=settings.AVATAR_ROOT, default='/1.jpg')
     is_star = models.BooleanField(name='is_star', default=0)
 
+    USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS = ('username',)
+
+    objects = UserManager()
+
     def __str__(self):
         return self.email
 
     class Meta:
         verbose_name = 'BaseUser'
         verbose_name_plural = 'BaseUsers'
+
+    @property
+    def token(self):
+        """
+        Позволяет нам получить токен пользователя, вызвав `user.token` вместо
+        `user.generate_jwt_token().
+
+        Декоратор `@property` выше делает это возможным.
+        `token` называется «динамическим свойством ».
+        """
+        return self._generate_jwt_token()
+
+    def _generate_jwt_token(self):
+        """
+        Создает веб-токен JSON, в котором хранится идентификатор
+        этого пользователя и срок его действия
+        составляет 60 дней в будущем.
+        """
+        dt = datetime.now() + timedelta(days=60)
+
+        token = jwt.encode({
+            'id': self.pk,
+            'exp': int(dt.strftime('%S'))
+        }, settings.SECRET_KEY, algorithm='HS256')
+
+        return token.decode('utf-8')
 
 
 class Customers(Users):
@@ -110,20 +177,15 @@ class Orders(models.Model):
       comment - колмментарий к заказы
       status_order - статус заказа (0 - New, 1 - Accepted, 2 - Completed)
     """
-    ORDER_STATUS = (
-        ('New', 'Новый заказ'),
-        ('Accepted', 'Заказ принят'),
-        ('Completed', 'Заказ завершен')
-    )
 
     customer_id = models.ForeignKey(Customers, name='customer_id', on_delete=models.CASCADE)
     star_id = models.ForeignKey(Stars, name='star_id', on_delete=models.CASCADE)
+    payment_id = models.CharField(name='payment_id', max_length=128, default='', blank=True)
     order_price = models.DecimalField(name='order_price', max_digits=9, decimal_places=2)
     ordering_time = models.DateTimeField(name='ordering_time', default=timezone.now)
     for_whom = models.CharField(name='for_whom', max_length=128)
     comment = models.TextField(name='comment')
     status_order = models.IntegerField(name='status_order', default=0)
-
 
     class Meta:
         verbose_name = 'Order'
@@ -133,7 +195,9 @@ class Orders(models.Model):
 @receiver(reset_password_token_created)
 def password_reset_token_created(sender, instance, reset_password_token, *args, **kwargs):
 
-    email_plaintext_message = "http://127.0.0.1:8000{}confirm/?token={}".format(reverse('password_reset:reset-password-request'), reset_password_token.key)
+    email_plaintext_message = "http://127.0.0.1:8000{}confirm/?token={}".format(
+        reverse('password_reset:reset-password-request'
+                ), reset_password_token.key)
 
     send_mail(
         # title:
