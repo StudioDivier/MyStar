@@ -2,27 +2,25 @@
 
 *End-points*
 
+http://192.168.1.131:8080/login/ - логин
 
+http://192.168.1.131:8080/registration/ - регистрация пользователя
 
+http://192.168.1.131:8080/categories/ - GET категории
 
-http://127.0.0.1:8000/api/customer/create/ - регистрация пользователя
-![](readme/create.png)
+http://192.168.1.131:8080/star/create/- регистрация звезды
 
-http://127.0.0.1:8000/api/star/create/ - регистрация звезды с токеном
-![](readme/newstar.png)
+http://192.168.1.131:8080/star/getlist/ - список всех звезд
 
-http://127.0.0.1:8000/api/stars/ - получить список звезд
-![](readme/starlist.png)
+http://192.168.1.131:8080/star/id/ - [GET] звезду по id
 
-http://127.0.0.1:8000/api/stars/<id> - получить звезду по id
-![](readme/strabyid.png)
+http://192.168.1.131:8080/star/category/ - [GET] звезд по id категории
 
-http://127.0.0.1:8000/api/starlist/category - получить список звезд по id категории
-![](readme/starbycatid.png)
+http://192.168.1.131:8080/ratestar/ - [POST] проголосовать за звезду
 
-http://127.0.0.1:8000/api/ratestar - проголосвать за звезду
-![](readme/staruprate.png)
+http://192.168.1.131:8080/order/ - сделать заказ
 
-http://127.0.0.1:8000/api/order - отправить заказ
-![](readme/ordersend.png)
+http://192.168.1.131:8080/orderaccept/ - звезда принимает/отклоняет заказ
+
+http://192.168.1.131:8080/personal/ - лк для звезды и заказчика
 
