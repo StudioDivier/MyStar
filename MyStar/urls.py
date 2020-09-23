@@ -28,7 +28,7 @@ urlpatterns = [
     path('api-auth/', include('rest_framework.urls', namespace='rest_framework')),
     re_path(r'^password_reset/', include('django_rest_passwordreset.urls')),
 
-    re_path(r'^payment/', YandexPayment.as_view()),
-    re_path(r'^payment/notification/', YandexNotification.as_view()),
+    re_path(r'^payments/', YandexPayment.as_view()),
+    re_path(r'^payments/notifications/', YandexNotification.as_view()),
 ]
 

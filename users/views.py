@@ -6,7 +6,7 @@ from django.core.mail import send_mail
 from django.conf import settings
 from rest_framework import status, viewsets, filters
 from rest_framework.generics import ListAPIView
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.authtoken.models import Token
@@ -114,7 +114,7 @@ class StarById(APIView):
     """
     Вьюшка для получения звезды по айди
     """
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
 
     def get(self, request):
     #     stars_set = Stars.objects.get(users_ptr_id=request.data['star_id'])
@@ -132,7 +132,7 @@ class StarsList(APIView):
     """
     Получаем список всех звезд
     """
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
 
     def get(self, request, format='json'):
         stars_list = Stars.objects.all()
@@ -145,7 +145,7 @@ class StarByCategory(APIView):
     """
     Вьюшка для получения спсика звезд по айди категории
     """
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
 
     def get(self, request, format='json'):
         """
@@ -169,8 +169,8 @@ class StarByCategory(APIView):
     #     json = serializer_class.data
     #     return Response(json, status=status.HTTP_200_OK)
         id = request.GET.get("id", "")
-        stars_set = Stars.objects.get(cat_name_id=id)
-        serializer_class = StarSerializer(stars_set)
+        stars_set = Stars.objects.filter(cat_name_id=id)
+        serializer_class = StarSerializer(stars_set, many=True)
         json = serializer_class.data
         return Response(json, status=status.HTTP_200_OK)
 
@@ -179,7 +179,8 @@ class RateStar(APIView):
     """
     Вьюшка для обновления рейтинга звезды 
     """
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
+
     def put(self, request, format='json'):
         """
         Получаем Request вида:
@@ -231,7 +232,8 @@ class OrderView(APIView):
     """
     Вьюшка для регистрации заказа и отправки уведомления на почту звезды
     """
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
+
     def post(self, request, format='json'):
         """
         Получаем request вида:
@@ -282,7 +284,8 @@ class StarOrderAccepted(APIView):
     """
     Вьюшка принятия или отклонения заяки на заказ со стороны звезды
     """
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
+
     def post(self, request, format='json'):
         """
         {
@@ -298,7 +301,7 @@ class StarOrderAccepted(APIView):
         customer_email = customer.email
         customer_username = customer.username
         if request.data['accept'] == 'accept':
-            order_set.payment_id = str(uuid.uuid4())
+            order_set.payment_id = ''
             order_set.status_order = 1
             order_set.save()
             SUBJECT = 'MySTAR: Уведомление!'
@@ -323,7 +326,7 @@ class StarOrderAccepted(APIView):
 
 class ListCategory(APIView):
 
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
 
     def get(self, request, format='json'):
 
@@ -337,7 +340,8 @@ class PersonalAccount(APIView):
     """
     Вьюшка личного кабинета
     """
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
+
     def get(self, request, format='json'):
         """
         Получаем request вида:
@@ -386,16 +390,15 @@ class TestView(APIView):
     """
     Временная тестовая вьюшка
     """
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
 
     def get(self, request):
         """
         Вьюшка для проверки гипотиз и доказательства теорем
         """
-        id = request.GET.get("id", "")
-        stars_set = Stars.objects.get(cat_name_id=id)
-        serializer_class = StarSerializer(stars_set)
-        json = serializer_class.data
+        cat_set = Categories.objects.all()
+        cat_serial = CategorySerializer(cat_set, many=True)
+        json = cat_serial.data
         return Response(json, status=status.HTTP_200_OK)
 
 

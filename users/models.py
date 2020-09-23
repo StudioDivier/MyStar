@@ -45,7 +45,7 @@ class UserManager(BaseUserManager):
         return user
 
 
-class Users(AbstractUser, models.Model):
+class Users(AbstractUser, PermissionsMixin):
     """
     Родительский класс для всех пользователей
      username - имя пользователя
@@ -61,6 +61,10 @@ class Users(AbstractUser, models.Model):
     password = models.CharField(name='password', max_length=128)
     avatar = models.FilePathField(name='avatar', path=settings.AVATAR_ROOT, default='/1.jpg')
     is_star = models.BooleanField(name='is_star', default=0)
+
+    is_staff = models.BooleanField(default=False)
+    is_superuser = models.BooleanField(default=False)
+    is_active = models.BooleanField(default=True)
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ('username',)
@@ -95,7 +99,7 @@ class Users(AbstractUser, models.Model):
 
         token = jwt.encode({
             'id': self.pk,
-            'exp': int(dt.strftime('%S'))
+            'exp': dt.utcfromtimestamp(dt.timestamp())
         }, settings.SECRET_KEY, algorithm='HS256')
 
         return token.decode('utf-8')
@@ -159,6 +163,7 @@ class Stars(Users):
     price = models.DecimalField(name='price', max_digits=9, decimal_places=2)
     cat_name_id = models.ForeignKey(Categories, to_field='id', on_delete=models.CASCADE)
     rating = models.IntegerField(name='rating')
+    days = models.CharField(name='days', default='0', max_length=8)
     video_hi = models.FilePathField(name='video_hi', path=settings.VIDEO_ROOT, default='/1.jpg')
 
     class Meta:
@@ -190,6 +195,7 @@ class Orders(models.Model):
     class Meta:
         verbose_name = 'Order'
         verbose_name_plural = 'Orders'
+
 
 
 @receiver(reset_password_token_created)

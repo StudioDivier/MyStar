@@ -81,11 +81,13 @@ REST_FRAMEWORK = {
         'rest_framework.permissions.IsAuthenticated',
     ),
     'DEFAULT_AUTHENTICATION_CLASSES': (
-        # 'oauth2_provider.ext.rest_framework.OAuth2Authentication',  # django-oauth-toolkit < 1.0.0
-        'oauth2_provider.contrib.rest_framework.OAuth2Authentication',  # django-oauth-toolkit >= 1.0.0
-        'rest_framework_social_oauth2.authentication.SocialAuthentication',
+        'users.backends.JWTAuthentication',
         'rest_framework.authentication.BasicAuthentication',
         'rest_framework.authentication.SessionAuthentication',
+        # 'oauth2_provider.ext.rest_framework.OAuth2Authentication',  # django-oauth-toolkit < 1.0.0
+        # 'oauth2_provider.contrib.rest_framework.OAuth2Authentication',  # django-oauth-toolkit >= 1.0.0
+        # 'rest_framework_social_oauth2.authentication.SocialAuthentication',
+
     ),
     # 'EXCEPTION_HANDLER': 'django_rest_logger.handlers.rest_exception_handler',
 }
@@ -94,8 +96,7 @@ AUTHENTICATION_BACKENDS = (
     # facebook
     'social_core.backends.facebook.FacebookAppOAuth2',
     'social_core.backends.facebook.FacebookOAuth2',
-    # instagram
-    'social_core.backends.instagram.InstagramOAuth2'
+
     #  google
     'social_core.backends.google.GoogleOAuth2',
     # vk

@@ -91,7 +91,8 @@ class StarSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Stars
-        fields = ('username', 'password', 'phone', 'email', 'price', 'cat_name_id', 'rating', 'is_star')
+        fields = ('id', 'username', 'password', 'phone', 'email', 'price',
+                  'cat_name_id', 'rating', 'is_star', 'days')
 
     def create(self, validated_data):
         star = Stars(
@@ -197,7 +198,7 @@ class LoginSerializer(serializers.Serializer):
 
     # Ignore these fields if they are included in the request.
     username = serializers.CharField(max_length=255, read_only=True)
-    # token = serializers.CharField(max_length=255, read_only=True)
+    token = serializers.CharField(max_length=255, read_only=True)
 
     def validate(self, data):
         """

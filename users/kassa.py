@@ -23,44 +23,41 @@ class YandexPayment(APIView):
     """
     permission_classes = [AllowAny]
 
-    def get(self, request):
+    def get(self, type_id):
         """
         Принимаем payment_id
         :param request:
         :param format:
         :return:
         """
-        idempotence_key = request.GET.get("payment_id", "")
-        value = request.GET.get("value", "")
-        order = Orders.objects.get(payment_id=idempotence_key)
-        status = int(order.status_order)
-        if status == 1:
-            payment = Payment.create({
-                "amount": {
-                    "value": value,
-                    "currency": "RUB"
-                },
-                "confirmation": {
-                    "type": "redirect",
-                    "return_url": "http://192.168.1.131:8080/"
-                },
-                "capture": False,
-                "description": "Заказ №1",
-                "metadata": {
-                    "order_id": "37"
-                }
-            }, idempotence_key)
+        order_id = self.request.GET.get('order_id')
+        order = Orders.objects.get(id=order_id)
+        # status = int(order.status_order)
+        value = order.order_price
 
-            # get confirmation url
-            confirmation_url = payment.confirmation.confirmation_url
-            order.status_order = 2
-            order.save()
-            return HttpResponseRedirect(confirmation_url)
+        payment = Payment.create({
+            "amount": {
+                "value": value,
+                "currency": "RUB"
+            },
+            "confirmation": {
+                "type": "redirect",
+                "return_url": "http://192.168.1.131:8080/"
+            },
+            "capture": False,
+            "description": "Заказ №1",
+            "metadata": {
+                "order_id": "37"
+            }
+        }, uuid.uuid4())
 
-        else:
-            return Response(status=400)
+        # get confirmation url
+        confirmation_url = payment.confirmation.confirmation_url
+        order.payment_id = payment.id
+        order.status_order = 2
+        order.save()
 
-
+        return HttpResponseRedirect(confirmation_url)
 
 
 class YandexNotification(APIView):
