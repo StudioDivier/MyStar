@@ -26,6 +26,39 @@ response:
 
     201
 
+* http://192.168.1.131:8080/password_reset/ - Смена пароля
+
+request:
+
+    {
+        "email": "niletto@star.com"
+    }
+    
+response: 
+
+    {
+        "status": "OK"
+    }
+    
+    Приходит на почту ссылка типа:
+        http://127.0.0.1:8000/password_reset/confirm/?token=121258a800cd8c3a66e9a849f1d3dd601c077f4
+        Которая ведет на форму смены паоля
+        
+* http://127.0.0.1:8000/password_reset/confirm/?token=121258a800cd8c3a66e9a849f1d3dd601c077f4
+
+request:
+
+    {
+    "password": "admin1234",
+    "token": "121258a800cd8c3a66e9a849f1d3dd601c077f4"
+    }
+    
+response:
+
+    {
+        "status": "OK"
+    }
+        
 * http://192.168.1.131:8080/api/star/getlist/ - список всех звезд
 
 response: 
