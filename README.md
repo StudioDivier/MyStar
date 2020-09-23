@@ -65,7 +65,7 @@ response:
 
     201
 
-* http://192.168.1.131:8080/api/star/id/ - [GET] звезду по id
+* http://192.168.1.131:8080/api/star/id/?id=1 - [GET] звезду по id
 
 request:
 
