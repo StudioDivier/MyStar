@@ -2,37 +2,37 @@
 
 *End-points*
 
-* http://192.168.1.131:8080/login/ - логин
+* http://192.168.1.131:8080/api/login/ - логин
 
 response: 
 
     201
 
-* http://192.168.1.131:8080/registration/ - регистрация пользователя
+* http://192.168.1.131:8080/api/registration/ - регистрация пользователя
 
 response: 
 
     201
 
-* http://192.168.1.131:8080/categories/ - GET категории
+* http://192.168.1.131:8080/api/categories/ - GET категории
 
 response: 
 
     201
 
-* http://192.168.1.131:8080/star/create/- регистрация звезды
+* http://192.168.1.131:8080/api/star/create/- регистрация звезды
 
 response: 
 
     201
 
-* http://192.168.1.131:8080/star/getlist/ - список всех звезд
+* http://192.168.1.131:8080/api/star/getlist/ - список всех звезд
 
 response: 
 
     201
 
-* http://192.168.1.131:8080/star/id/ - [GET] звезду по id
+* http://192.168.1.131:8080/api/star/id/ - [GET] звезду по id
 
 request:
 
@@ -52,7 +52,7 @@ response:
         "is_star": true
     }
 
-* http://192.168.1.131:8080/star/category/ - [GET] звезд по id категории
+* http://192.168.1.131:8080/api/star/category/ - [GET] звезд по id категории
 
 request:
 
@@ -74,7 +74,7 @@ response:
         }
     ]
 
-* http://192.168.1.131:8080/ratestar/ - [PUT] проголосовать за звезду
+* http://192.168.1.131:8080/api/ratestar/ - [PUT] проголосовать за звезду
 
 request:
 
@@ -88,7 +88,7 @@ response:
 
     201
 
-* http://192.168.1.131:8080/order/ - [POST] сделать заказ
+* http://192.168.1.131:8080/api/order/ - [POST] сделать заказ
 
 request:
 
@@ -106,7 +106,7 @@ response:
     201
 
 
-* http://192.168.1.131:8080/orderaccept/ - [POST] звезда принимает/отклоняет заказ
+* http://192.168.1.131:8080/api/orderaccept/ - [POST] звезда принимает/отклоняет заказ
 
 request:
 
@@ -119,7 +119,7 @@ response:
 
     201
 
-* http://192.168.1.131:8080/personal/ - лк для звезды и заказчика
+* http://192.168.1.131:8080/api/personal/ - лк для звезды и заказчика
 
 request:
 
