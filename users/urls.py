@@ -2,7 +2,7 @@ from django.urls import include, path, re_path
 from rest_framework import routers
 from .views import (
 CustomerCreate, StarCreate, StarsList, StarById, RateStar, StarByCategory, TestView, OrderView, PersonalAccount,
-LoginAPIView, StarOrderAccepted, ListCategory, Registration
+LoginAPIView, StarOrderAccepted, ListCategory
 )
 
 from MyStar import settings
