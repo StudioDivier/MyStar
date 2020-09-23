@@ -85,13 +85,7 @@ response:
         "is_star": true
     }
 
-* http://192.168.1.131:8080/api/star/category/ - [GET] звезд по id категории
-
-request:
-
-    {
-        "cat_name_id": "1"
-    }
+* http://192.168.1.131:8080/api/star/category/?id=1 - [GET] звезд по id категории
 
 response:
 

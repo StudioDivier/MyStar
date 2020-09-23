@@ -2,7 +2,7 @@ from django.urls import include, path, re_path
 from rest_framework import routers
 from .views import (
 CustomerCreate, StarCreate, StarsList, StarById, RateStar, StarByCategory, TestView, OrderView, PersonalAccount,
-LoginAPIView, StarOrderAccepted, ListCategory
+LoginAPIView, StarOrderAccepted, ListCategory, # StarsViewSet
 )
 
 from MyStar import settings
@@ -10,7 +10,7 @@ from django.conf import settings
 from django.conf.urls.static import static
 
 # router = routers.DefaultRouter()
-# router.register(r'stars', StarViewSet)
+# router.register(r'stars', StarsViewSet)
 
 urlpatterns = [
     # path('', include(router.urls)),

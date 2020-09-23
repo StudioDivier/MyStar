@@ -39,38 +39,6 @@ class CustomerCreate(APIView):
             },
             status=status.HTTP_201_CREATED,
         )
-    # """
-    # Вьюшка для создания пользователя(заказчика) с токеном
-    # """
-    # def post(self, request, format='json'):
-    #     """
-    #     Принимаем request Вида:
-    #     {
-    #         "username": "ValyMalya",
-    #         "phone": 9942638783,
-    #         "email": "ValyMalya@rambler.com",
-    #         "password": "ValyMalya666",
-    #         "date_of_birth": "1968-08-05"
-    #     }, где
-    #         :param username: - ник пользователя
-    #         :param phone: - номер телефона
-    #         :param email: - электронная почта пользователя
-    #         :param password: - пароль (в бд храним хэш)
-    #         :param date_of_birth: - дата рождения пользователя
-    #     1. Создаем запись в бд из данных request через сериализер
-    #     2. Добавляем токен ьпользователю
-    #     :return: Response 201, если запись создана. Response 400, если данные не валидные
-    #     """
-    #     serializer = CustomerSerializer(data=request.data)
-    #     if serializer.is_valid():
-    #         customer = serializer.save()
-    #         if customer:
-    #             token = Token.objects.create(user=customer)
-    #             json = serializer.data
-    #             json['token'] = token.key
-    #             return Response(json, status=status.HTTP_201_CREATED)
-    #         # return Response(serializer.errors, status=status.HTTP_418_IM_A_TEAPOT)
-    #     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class LoginAPIView(APIView):
@@ -90,6 +58,7 @@ class LoginAPIView(APIView):
         if serializer.is_valid(raise_exception=True):
             cust_set = Customers.objects.get(email=request.data['email'])
             json = {
+                'id': cust_set.id,
                 'username': cust_set.username,
                 'phone': cust_set.phone,
                 'is_star': cust_set.is_star,
@@ -147,8 +116,13 @@ class StarById(APIView):
     """
     permission_classes = [AllowAny]
 
-    def get(self, request, format='json'):
-        stars_set = Stars.objects.get(users_ptr_id=request.data['star_id'])
+    def get(self, request):
+    #     stars_set = Stars.objects.get(users_ptr_id=request.data['star_id'])
+    #     serializer_class = StarSerializer(stars_set)
+    #     json = serializer_class.data
+    #     return Response(json, status=status.HTTP_200_OK)
+        id = request.GET.get("id", "")
+        stars_set = Stars.objects.get(id=id)
         serializer_class = StarSerializer(stars_set)
         json = serializer_class.data
         return Response(json, status=status.HTTP_200_OK)
@@ -172,6 +146,7 @@ class StarByCategory(APIView):
     Вьюшка для получения спсика звезд по айди категории
     """
     permission_classes = [AllowAny]
+
     def get(self, request, format='json'):
         """
         Получаем request вида:
@@ -183,11 +158,21 @@ class StarByCategory(APIView):
         2. Переводим в дату и отдаем с 200 response
         :return:
         """
-        strarsest = Stars.objects.filter(cat_name_id=request.data['cat_name_id'])
-        serialstar = StarSerializer(strarsest, many=True)
-
-        stardata = serialstar.data
-        return Response(stardata, status=status.HTTP_200_OK)
+        # strarsest = Stars.objects.filter(cat_name_id=request.data['cat_name_id'])
+        # serialstar = StarSerializer(strarsest, many=True)
+        #
+        # stardata = serialstar.data
+        # return Response(stardata, status=status.HTTP_200_OK)
+    # def get(self, request):
+    #     stars_set = Stars.objects.get(users_ptr_id=request.data['star_id'])
+    #     serializer_class = StarSerializer(stars_set)
+    #     json = serializer_class.data
+    #     return Response(json, status=status.HTTP_200_OK)
+        id = request.GET.get("id", "")
+        stars_set = Stars.objects.get(cat_name_id=id)
+        serializer_class = StarSerializer(stars_set)
+        json = serializer_class.data
+        return Response(json, status=status.HTTP_200_OK)
 
 
 class RateStar(APIView):
@@ -402,14 +387,16 @@ class TestView(APIView):
     Временная тестовая вьюшка
     """
     permission_classes = [AllowAny]
-    def get(self, request, format='json'):
+
+    def get(self, request):
         """
         Вьюшка для проверки гипотиз и доказательства теорем
         """
-        payment_id = request.data['payment_id']
-        value = request.data['value']
-        return Response(data = str(value))
-
+        id = request.GET.get("id", "")
+        stars_set = Stars.objects.get(cat_name_id=id)
+        serializer_class = StarSerializer(stars_set)
+        json = serializer_class.data
+        return Response(json, status=status.HTTP_200_OK)
 
 
 

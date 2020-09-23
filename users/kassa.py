@@ -23,43 +23,44 @@ class YandexPayment(APIView):
     """
     permission_classes = [AllowAny]
 
-    def get(self, request, format='json'):
+    def get(self, request):
         """
         Принимаем payment_id
         :param request:
         :param format:
         :return:
         """
-        payment_id = request.data['payment_id']
-        value = request.data['value']
-        # payment_id = request.GET.get('payment_id')
-        # value = request.GET.get('value')
-        # order_set = Orders.objects.get(payment_id=payment_id)
-        # order_serial = OrderSerializer(order_set)
-        # json = order_serial.data
-        # value = order_set.order_price
+        idempotence_key = request.GET.get("payment_id", "")
+        value = request.GET.get("value", "")
+        order = Orders.objects.get(payment_id=idempotence_key)
+        status = int(order.status_order)
+        if status == 1:
+            payment = Payment.create({
+                "amount": {
+                    "value": value,
+                    "currency": "RUB"
+                },
+                "confirmation": {
+                    "type": "redirect",
+                    "return_url": "http://192.168.1.131:8080/"
+                },
+                "capture": False,
+                "description": "Заказ №1",
+                "metadata": {
+                    "order_id": "37"
+                }
+            }, idempotence_key)
 
-        payment = Payment.create({
-            "id": payment_id,
-            "amount": {
-                "value": value,
-                "currency": "RUB"
-            },
-            "payment_method_data": {
-                "type": 'bank_cart'
-            },
-            "confirmation": {
-                "type": "redirect",
-                "return_url": "http://192.168.1.131:8080"
-            },
-            "capture": 'false',
-            "description": "Заказ №1"
-        })
-        """
-        Добавить информацию value в таблицу Order
-        """
+            # get confirmation url
+            confirmation_url = payment.confirmation.confirmation_url
+            order.status_order = 2
+            order.save()
+            return HttpResponseRedirect(confirmation_url)
 
-        return HttpResponseRedirect(payment.confirmation.confirmation_url)
+        else:
+            return Response(status=400)
+
+
 
 
 class YandexNotification(APIView):
@@ -69,17 +70,18 @@ class YandexNotification(APIView):
 
     permission_classes = [AllowAny]
 
-    def post(self, request, format='json'):
+    def post(self, request):
         """
         Подтверждение платежа и смена статуса заказа
         :param request:
         :return:
         """
-        payment_id = request.data['payment_id']
+        payment_id = request.GET.get("payment_id", "")
+        # payment_id = '26fd1b35-000f-5000-a000-14c3cdc3d6c1'
         Payment.capture(payment_id)
 
         order = Orders.objects.get(payment_id=payment_id)
-        order.status_order = 2
+        order.status_order = 3
         order.save()
 
         return Response(status=200)
