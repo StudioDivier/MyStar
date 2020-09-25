@@ -2,7 +2,25 @@ from django.contrib.auth import authenticate
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 
-from .models import Customers, Stars, Users, Ratings, Orders, Categories
+from .models import Customers, Stars, Users, Ratings, Orders, Categories, Avatars, Videos, Congratulations
+
+
+class AvatarSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Avatars
+        fields = ('user_id', 'image')
+
+
+class VideoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Videos
+        fields = ('star_id', 'video_hi')
+
+
+class CongratulationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Congratulations
+        fields = ('star_id', 'video_con', 'order_id')
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -22,7 +40,7 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Users
-        fields = ('id', 'username', 'phone', 'email', 'password')
+        fields = ('id', 'username', 'phone', 'email', 'password', 'avatar')
 
 
 class CustomerSerializer(serializers.ModelSerializer):
@@ -46,7 +64,7 @@ class CustomerSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Customers
-        fields = ('username', 'phone', 'email', 'password', 'date_of_birth', 'is_star')
+        fields = ('id', 'username', 'phone', 'email', 'password', 'date_of_birth', 'is_star')
 
     def create(self, validated_data):
         customer = Customers(
@@ -141,7 +159,7 @@ class OrderSerializer(serializers.ModelSerializer):
     class Meta:
         model = Orders
         fields = ('customer_id', 'star_id', 'payment_id', 'order_price',
-                  'ordering_time', 'for_whom', 'comment', 'status_order')
+                  'by_date', 'for_whom', 'comment', 'status_order')
 
     def update(self, instance, validated_data):
         instance.price = validated_data.get('order_price', instance.price)

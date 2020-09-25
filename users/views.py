@@ -1,5 +1,7 @@
 from math import ceil
 import uuid
+from PIL import Image
+from django_rest_api_logger import APILoggingMixin
 
 from django.contrib.auth import login
 from django.core.mail import send_mail
@@ -7,13 +9,16 @@ from django.conf import settings
 from rest_framework import status, viewsets, filters
 from rest_framework.generics import ListAPIView
 from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.exceptions import ParseError
+from rest_framework.parsers import FileUploadParser, MultiPartParser
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.authtoken.models import Token
 
-from .models import Customers, Stars, Ratings, Orders, Users, Categories
+from .models import Customers, Stars, Ratings, Orders, Users, Categories, Avatars, Videos, Congratulations
 from .serializers import LoginSerializer, UserSerializer, RegistrationSerializer, CategorySerializer
-from .serializers import CustomerSerializer, StarSerializer, RatingSerializer, OrderSerializer
+from .serializers import CustomerSerializer, StarSerializer, RatingSerializer, OrderSerializer, AvatarSerializer
+from .serializers import VideoSerializer, CongratulationSerializer
 
 
 class CustomerCreate(APIView):
@@ -63,7 +68,7 @@ class LoginAPIView(APIView):
                 'phone': cust_set.phone,
                 'is_star': cust_set.is_star,
                 'email': cust_set.email,
-                'avatar': cust_set.avatar,
+                # 'avatar': cust_set.avatar,
                 'token': cust_set.token
             }
             return Response(json, status=status.HTTP_200_OK)
@@ -74,6 +79,7 @@ class StarCreate(APIView):
     Вьюшка для создания звезды с токеном
     """
     permission_classes = [AllowAny]
+
     def post(self, request, format='json'):
         """
         Принимаем request Вида:
@@ -110,25 +116,33 @@ class StarCreate(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class StarById(APIView):
+class StarById(APILoggingMixin, APIView):
     """
     Вьюшка для получения звезды по айди
     """
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-    #     stars_set = Stars.objects.get(users_ptr_id=request.data['star_id'])
-    #     serializer_class = StarSerializer(stars_set)
-    #     json = serializer_class.data
-    #     return Response(json, status=status.HTTP_200_OK)
         id = request.GET.get("id", "")
-        stars_set = Stars.objects.get(id=id)
-        serializer_class = StarSerializer(stars_set)
-        json = serializer_class.data
-        return Response(json, status=status.HTTP_200_OK)
+        try:
+            stars_set = Stars.objects.get(id=id)
+            serializer_class = StarSerializer(stars_set)
+            json = serializer_class.data
+
+            avatar = Avatars.objects.get(user_id=id)
+            json['avatar'] = str(avatar.image)
+            return Response(json, status=status.HTTP_200_OK)
+        except Stars.DoesNotExist:
+            # logger.debug(msg="Star id={} not found".format(id), exc_info=True)
+            json = {"exception": "Star id not found"}
+            return Response(json, status=status.HTTP_404_NOT_FOUND)
+        except ValueError:
+            # logger.warning(msg="Field 'id' expected a number but got {}.".format(id), exc_info=True)
+            json = {"exception": "Field 'id' expected a number but got {}".format(id)}
+            return Response(json, status=status.HTTP_400_BAD_REQUEST)
 
 
-class StarsList(APIView):
+class StarsList(APILoggingMixin, APIView):
     """
     Получаем список всех звезд
     """
@@ -141,7 +155,7 @@ class StarsList(APIView):
         return Response(json, status=status.HTTP_200_OK)
 
 
-class StarByCategory(APIView):
+class StarByCategory(APILoggingMixin, APIView):
     """
     Вьюшка для получения спсика звезд по айди категории
     """
@@ -149,33 +163,38 @@ class StarByCategory(APIView):
 
     def get(self, request, format='json'):
         """
-        Получаем request вида:
-        {
-            "cat_name_id": "1"
-        }, где
-            :param cat_name_id: - id категории
         1. Получаем QuerySet из таблицы звезд по id категории
         2. Переводим в дату и отдаем с 200 response
         :return:
         """
-        # strarsest = Stars.objects.filter(cat_name_id=request.data['cat_name_id'])
-        # serialstar = StarSerializer(strarsest, many=True)
-        #
-        # stardata = serialstar.data
-        # return Response(stardata, status=status.HTTP_200_OK)
-    # def get(self, request):
-    #     stars_set = Stars.objects.get(users_ptr_id=request.data['star_id'])
-    #     serializer_class = StarSerializer(stars_set)
-    #     json = serializer_class.data
-    #     return Response(json, status=status.HTTP_200_OK)
         id = request.GET.get("id", "")
-        stars_set = Stars.objects.filter(cat_name_id=id)
-        serializer_class = StarSerializer(stars_set, many=True)
-        json = serializer_class.data
-        return Response(json, status=status.HTTP_200_OK)
+        try:
+            stars_set = Stars.objects.filter(cat_name_id=id)
+            serializer_class = StarSerializer(stars_set, many=True)
+
+            avatar_set = Avatars.objects.all()
+            serial_avatar = AvatarSerializer(avatar_set, many=True)
+            avatar_data = serial_avatar.data
+            json = serializer_class.data
+            for i in range(len(json)):
+                for j in range(len(avatar_data)):
+                    if json[i]['id'] == avatar_data[j]['user_id']:
+                        json[i]['avatar'] = avatar_data[j]['image']
 
 
-class RateStar(APIView):
+            try:
+                if json == []:
+                    raise Stars.DoesNotExist
+            except Stars.DoesNotExist:
+                json = {"exception": "No stars found by category id = {}".format(id)}
+                return Response(json, status=status.HTTP_404_NOT_FOUND)
+            return Response(json, status=status.HTTP_200_OK)
+        except ValueError:
+            json = {"exception": "Field 'id' expected a number but got '{}'".format(id)}
+            return Response(json, status=status.HTTP_400_BAD_REQUEST)
+
+
+class RateStar(APILoggingMixin, APIView):
     """
     Вьюшка для обновления рейтинга звезды 
     """
@@ -221,14 +240,14 @@ class RateStar(APIView):
                 starset.save()
                 # serialstar = StarSerializer(data=starset, partial=True)
                 # if serialstar.is_valid():
-                return Response(status=status.HTTP_201_CREATED)
+                return Response({"Star is rated"}, status=status.HTTP_201_CREATED)
 
                 # return Response(serializer.errors, status=status.HTTP_418_IM_A_TEAPOT)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class OrderView(APIView):
+class OrderView(APILoggingMixin, APIView):
     """
     Вьюшка для регистрации заказа и отправки уведомления на почту звезды
     """
@@ -244,6 +263,7 @@ class OrderView(APIView):
             "for_whom": "Для Мамы",
             "comment": "Хочу поздравить маму с днем рождения",
             "status_order": "New"
+            "by_date"
         }, где
             :param customer_id: - id заказчика
             :param star_id: - id звезды
@@ -257,9 +277,6 @@ class OrderView(APIView):
         4. Отправляем письмо на почту звезде с уведомлением о заказе
         :return: Response 201, если все хорошо. Response 400, если данные не валидные
         """
-        # payment_id = str(uuid.uuid4())
-        # json = request.data
-        # json['payment_id'] = payment_id
         order_serializer = OrderSerializer(data=request.data)
         if order_serializer.is_valid():
             order = order_serializer.save()
@@ -276,11 +293,16 @@ class OrderView(APIView):
                     star_username, star_price
                 )
                 send_mail(SUBJECT, TEXT_MESASGE, settings.EMAIL_HOST_USER, [star_email])
-                return Response(status=status.HTTP_201_CREATED)
+                return Response({'Order created'}, status=status.HTTP_201_CREATED)
+        else:
+            json = {
+                'Data invalid'
+            }
+            return Response(json, status=status.HTTP_400_BAD_REQUEST)
         return Response(status=status.HTTP_418_IM_A_TEAPOT)
 
 
-class StarOrderAccepted(APIView):
+class StarOrderAccepted(APILoggingMixin, APIView):
     """
     Вьюшка принятия или отклонения заяки на заказ со стороны звезды
     """
@@ -324,19 +346,17 @@ class StarOrderAccepted(APIView):
         return Response(status=status.HTTP_201_CREATED)
 
 
-class ListCategory(APIView):
-
+class ListCategory(APILoggingMixin, APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, format='json'):
-
         cat_set = Categories.objects.all()
         cat_serial = CategorySerializer(cat_set, many=True)
         json = cat_serial.data
         return Response(json, status=status.HTTP_200_OK)
 
 
-class PersonalAccount(APIView):
+class PersonalAccount(APILoggingMixin, APIView):
     """
     Вьюшка личного кабинета
     """
@@ -386,7 +406,85 @@ class PersonalAccount(APIView):
         return Response(json, status=status.HTTP_200_OK)
 
 
-class TestView(APIView):
+class AvatarUploadView(APILoggingMixin, APIView):
+    permission_classes = [IsAuthenticated]
+    parser_classes = (MultiPartParser, )
+
+    def post(self, request, *args, **kwargs):
+
+        file_serializer = AvatarSerializer(data=request.data)
+        if file_serializer.is_valid():
+            file_serializer.save()
+            return Response(file_serializer.data, status=status.HTTP_201_CREATED)
+        else:
+            return Response(file_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class VideohiView(APILoggingMixin, APIView):
+    permission_classes = [IsAuthenticated]
+    parser_classes = (MultiPartParser, )
+
+    def post(self, request, *args, **kwargs):
+
+        file_serializer = VideoSerializer(data=request.data)
+        if file_serializer.is_valid():
+            file_serializer.save()
+            return Response(file_serializer.data, status=status.HTTP_201_CREATED)
+        else:
+            return Response(file_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class CongratulationView(APILoggingMixin, APIView):
+    permission_classes = [IsAuthenticated]
+    parser_classes = (MultiPartParser, )
+
+    def post(self, request, *args, **kwargs):
+
+        file_serializer = CongratulationSerializer(data=request.data)
+        if file_serializer.is_valid():
+            video = file_serializer.save()
+            if video:
+                order = Orders.objects.get(id=request.data['order_id'])
+                cust_username = order.customer_id.username
+                cust_email = order.customer_id.email
+                star = Stars.objects.get(id=request.data['star_id'])
+                star_username = star.username
+                # cust = Customers.objects.get(id=cust_id)
+                # cust_email = cust.email
+                # cust_username = cust.username
+                SUBJECT = 'MySTAR: Уведомление!'
+                TEXT_MESASGE = 'Уважаемый {}, Вам пришло видео поздравление '.format(
+                    cust_username, star_username
+                )
+                send_mail(SUBJECT, TEXT_MESASGE, settings.EMAIL_HOST_USER, [cust_email])
+            return Response(file_serializer.data, status=status.HTTP_201_CREATED)
+        else:
+            return Response(file_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class OrderDetailCustomerView(APILoggingMixin, APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, format='json'):
+        order = Orders.objects.get(id=request.data['order_id'])
+        star = Stars.objects.get(id=request.data['star_id'])
+        try:
+            video = Congratulations.objects.get(order_id=request.data['order_id'])
+            json = {
+                'star_username': str(star.username),
+                'order_price': order.order_price,
+                'video': str(video.video_con)
+            }
+            return Response(json, status=status.HTTP_200_OK)
+        except Congratulations.DoesNotExist:
+            json = {
+                'star_username': str(star.username),
+                'order_price': order.order_price
+            }
+            return Response(json, status=status.HTTP_200_OK)
+
+
+class TestView(APILoggingMixin, APIView):
     """
     Временная тестовая вьюшка
     """
@@ -396,10 +494,9 @@ class TestView(APIView):
         """
         Вьюшка для проверки гипотиз и доказательства теорем
         """
-        cat_set = Categories.objects.all()
-        cat_serial = CategorySerializer(cat_set, many=True)
-        json = cat_serial.data
+        id = self.request.GET.get('id')
+        cust_set = Customers.objects.get(id=id)
+        json = {
+            'avatar': 'http://' + settings.ALLOWED_HOSTS[0] + ':8080/' + cust_set.avatar
+        }
         return Response(json, status=status.HTTP_200_OK)
-
-
-

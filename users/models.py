@@ -16,6 +16,50 @@ from django.urls import reverse
 from django_rest_passwordreset.signals import reset_password_token_created
 from django.core.mail import send_mail
 from MyStar import config
+import uuid
+
+
+def nameFile(instance, filename):
+    filename = str(uuid.uuid4()) + '.jpeg'
+    return '/'.join(['avatars', filename])
+
+
+def nameVideoFile(instance, filename):
+    filename = str(uuid.uuid4()) + '.mp4'
+    return '/'.join(['videos', str(instance.star_id), filename])
+
+
+def congratulationFile(instance, filename):
+    filename = str(uuid.uuid4()) + '.mp4'
+    return '/'.join(['congratulation', str(instance.star_id), filename])
+
+
+class Avatars(models.Model):
+    user_id = models.IntegerField(name='user_id', unique=True)
+    image = models.ImageField(upload_to=nameFile)
+
+    class Meta:
+        verbose_name = 'avatar'
+        verbose_name_plural = 'avatars'
+
+
+class Videos(models.Model):
+    star_id = models.IntegerField(name='star_id', unique=True)
+    video_hi = models.FileField(upload_to=nameVideoFile)
+
+    class Meta:
+        verbose_name = 'video'
+        verbose_name_plural = 'videos'
+
+
+class Congratulations(models.Model):
+    star_id = models.IntegerField(name='star_id', unique=True)
+    video_con = models.FileField(upload_to=congratulationFile)
+    order_id = models.IntegerField(name='order_id', unique=True)
+
+    class Meta:
+        verbose_name = 'congritulation'
+        verbose_name_plural = 'congritulations'
 
 
 class UserManager(BaseUserManager):
@@ -59,7 +103,11 @@ class Users(AbstractUser, PermissionsMixin):
     phone = models.BigIntegerField(name='phone', unique=True)
     email = models.EmailField(name='email', unique=True)
     password = models.CharField(name='password', max_length=128)
-    avatar = models.FilePathField(name='avatar', path=settings.AVATAR_ROOT, default='/1.jpg')
+    # avatar = models.FilePathField(name='avatar', path=settings.AVATAR_ROOT, default='media/avatars/1.jpg')
+    # avatar = models.ImageField(
+    #     upload_to=productFile,
+    #     max_length=254, blank=True, null=True
+    # )
     is_star = models.BooleanField(name='is_star', default=0)
 
     is_staff = models.BooleanField(default=False)
@@ -188,6 +236,7 @@ class Orders(models.Model):
     payment_id = models.CharField(name='payment_id', max_length=128, default='', blank=True)
     order_price = models.DecimalField(name='order_price', max_digits=9, decimal_places=2)
     ordering_time = models.DateTimeField(name='ordering_time', default=timezone.now)
+    by_date = models.DateField(name='by_date', default=None)
     for_whom = models.CharField(name='for_whom', max_length=128)
     comment = models.TextField(name='comment')
     status_order = models.IntegerField(name='status_order', default=0)
@@ -195,7 +244,6 @@ class Orders(models.Model):
     class Meta:
         verbose_name = 'Order'
         verbose_name_plural = 'Orders'
-
 
 
 @receiver(reset_password_token_created)

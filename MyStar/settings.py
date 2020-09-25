@@ -30,7 +30,7 @@ DEBUG = True
 # '192.168.1.131'
 ALLOWED_HOSTS = ['192.168.1.131', '127.0.0.1']
 SITE_ID = 1
-
+DATA_UPLOAD_MAX_MEMORY_SIZE = 15728640
 
 
 # Application definition
@@ -66,16 +66,6 @@ INSTALLED_APPS = [
 
 AUTH_USER_MODEL = 'users.Users'
 
-# REST_FRAMEWORK = {
-#     'DEFAULT_PERMISSION_CLASSES': (
-#         'rest_framework.permissions.IsAuthenticated',
-#     ),
-#     'DEFAULT_AUTHENTICATION_CLASSES': (
-#         'rest_framework_jwt.authentication.JSONWebTokenAuthentication',
-#         'rest_framework.authentication.SessionAuthentication',
-#         'rest_framework.authentication.BasicAuthentication',
-#     ),
-# }
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': (
         'rest_framework.permissions.IsAuthenticated',
@@ -84,15 +74,17 @@ REST_FRAMEWORK = {
         'users.backends.JWTAuthentication',
         'rest_framework.authentication.BasicAuthentication',
         'rest_framework.authentication.SessionAuthentication',
-        # 'oauth2_provider.ext.rest_framework.OAuth2Authentication',  # django-oauth-toolkit < 1.0.0
-        # 'oauth2_provider.contrib.rest_framework.OAuth2Authentication',  # django-oauth-toolkit >= 1.0.0
-        # 'rest_framework_social_oauth2.authentication.SocialAuthentication',
+        'oauth2_provider.contrib.rest_framework.OAuth2Authentication',
+        'rest_framework_social_oauth2.authentication.SocialAuthentication',
 
     ),
     # 'EXCEPTION_HANDLER': 'django_rest_logger.handlers.rest_exception_handler',
 }
 
 AUTHENTICATION_BACKENDS = (
+    'rest_framework_social_oauth2.backends.DjangoOAuth2',
+    'django.contrib.auth.backends.ModelBackend',
+
     # facebook
     'social_core.backends.facebook.FacebookAppOAuth2',
     'social_core.backends.facebook.FacebookOAuth2',
@@ -247,20 +239,11 @@ SOCIAL_AUTH_MAIL_OAUTH2_SECRET = OAUTHDATA.SOCIAL_AUTH_MAIL_OAUTH2_SECRET
 SOCIAL_AUTH_OK_OAUTH2_KEY = OAUTHDATA.SOCIAL_AUTH_OK_OAUTH2_KEY
 SOCIAL_AUTH_OK_OAUTH2_SECRET = OAUTHDATA.SOCIAL_AUTH_OK_OAUTH2_SECRET
 
+LOG_PATH = os.path.join(BASE_DIR, "log/")
+# file ------> Writes logs to file
+# console ---> Prints logs in console
+DRF_LOGGER_HANDLER = ["file", "console"]
 
-# if DEBUG:
-#     LOGGING = config.LOGGER.DEV
-#
-#     DEFAULT_LOGGER = 'django_rest_logger'
-#
-#     LOGGER_EXCEPTION = DEFAULT_LOGGER
-#     LOGGER_ERROR = DEFAULT_LOGGER
-#     LOGGER_WARNING = DEFAULT_LOGGER
-# else:
-#     LOGGING = config.LOGGER.PROD
-#
-#     DEFAULT_LOGGER = 'raven'
-#
-#     LOGGER_EXCEPTION = DEFAULT_LOGGER
-#     LOGGER_ERROR = DEFAULT_LOGGER
-#     LOGGER_WARNING = DEFAULT_LOGGER
+# Log file directory
+# Make sure directory exists
+DRF_LOGGER_FILE = LOG_PATH + 'custom_logger.log'

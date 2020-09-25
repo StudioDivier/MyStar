@@ -145,6 +145,30 @@ request:
 response: 
 
     201
+    
+* http://192.168.1.131:8080/api/order/cust/detail/ - [GET] заказчик получает информацию по заказу
+
+request:
+
+    {
+        "order_id": "2",
+        "star_id": "5"
+    }
+    
+response(если звезда не прислала поздравление):
+
+    {
+        "star_username": "Окимирон",
+        "order_price": 88888.0
+    }
+    
+response(если звезда прислала поздравление):
+
+    {
+        "star_username": "Окимирон",
+        "order_price": 88888.0,
+        "video": "congratulation/5/ef01bd85-3509-4cd2-907b-545dd7c799b5.mp4"
+    }
 
 * http://192.168.1.131:8080/api/personal/ - лк для звезды и заказчика
 
@@ -201,3 +225,31 @@ response:
         }
     ]
 
+* http://192.168.1.131:8080/payments/?order_id=1 - создание платежа (холд)
+
+    редирект на страницу оплаты
+    
+* http://192.168.1.131:8080/payments/notifications/ -  списание денег
+   
+   редирект на страницу оплаты
+   
+* http://192.168.1.131:8080/api/upload/avatar/ - загрузить фотку (до 15 мб)
+
+request(multipart/formdata):
+response:
+    ![](readme/upload%20avatar.png)
+
+* http://192.168.1.131:8080/api/upload/video/hi/ - загрузить видео приветсвие звезды
+
+request(multipart/formdata):
+response:
+    ![](readme/videohi.png)
+    
+* http://192.168.1.131:8080/api/upload/congritulatoin/ - загрузить поздравление
+
+request(multipart/formdata):
+response:
+    ![](readme/cong.png)
+
+   
+   
