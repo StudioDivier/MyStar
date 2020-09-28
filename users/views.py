@@ -60,7 +60,8 @@ class LoginAPIView(APIView):
         Returns a JSON web token.
         """
         serializer = self.serializer_class(data=request.data)
-        if serializer.is_valid(raise_exception=True):
+
+        if serializer.is_valid():
             cust_set = Customers.objects.get(email=request.data['email'])
             json = {
                 'id': cust_set.id,
@@ -72,6 +73,7 @@ class LoginAPIView(APIView):
                 'token': cust_set.token
             }
             return Response(json, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_404_NOT_FOUND)
 
 
 class StarCreate(APIView):
@@ -134,11 +136,11 @@ class StarById(APILoggingMixin, APIView):
             return Response(json, status=status.HTTP_200_OK)
         except Stars.DoesNotExist:
             # logger.debug(msg="Star id={} not found".format(id), exc_info=True)
-            json = {"exception": "Star id not found"}
+            json = {"exception": "Звезда с  id={} не была найдена".format(id)}
             return Response(json, status=status.HTTP_404_NOT_FOUND)
         except ValueError:
             # logger.warning(msg="Field 'id' expected a number but got {}.".format(id), exc_info=True)
-            json = {"exception": "Field 'id' expected a number but got {}".format(id)}
+            json = {"exception": "Поле 'id' ожидает чилсло, но было принято {}".format(id)}
             return Response(json, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -186,11 +188,11 @@ class StarByCategory(APILoggingMixin, APIView):
                 if json == []:
                     raise Stars.DoesNotExist
             except Stars.DoesNotExist:
-                json = {"exception": "No stars found by category id = {}".format(id)}
+                json = {"exception": "Не найдено звезд в категории id = {}".format(id)}
                 return Response(json, status=status.HTTP_404_NOT_FOUND)
             return Response(json, status=status.HTTP_200_OK)
         except ValueError:
-            json = {"exception": "Field 'id' expected a number but got '{}'".format(id)}
+            json = {"exception": "Поле 'id' ожидает чилсло, но было принято '{}'".format(id)}
             return Response(json, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -240,7 +242,7 @@ class RateStar(APILoggingMixin, APIView):
                 starset.save()
                 # serialstar = StarSerializer(data=starset, partial=True)
                 # if serialstar.is_valid():
-                return Response({"Star is rated"}, status=status.HTTP_201_CREATED)
+                return Response({"Оценка выставлена"}, status=status.HTTP_201_CREATED)
 
                 # return Response(serializer.errors, status=status.HTTP_418_IM_A_TEAPOT)
 
@@ -293,10 +295,10 @@ class OrderView(APILoggingMixin, APIView):
                     star_username, star_price
                 )
                 send_mail(SUBJECT, TEXT_MESASGE, settings.EMAIL_HOST_USER, [star_email])
-                return Response({'Order created'}, status=status.HTTP_201_CREATED)
+                return Response({'Заказ создан!'}, status=status.HTTP_201_CREATED)
         else:
             json = {
-                'Data invalid'
+                'Неверные данные для создания заказа.'
             }
             return Response(json, status=status.HTTP_400_BAD_REQUEST)
         return Response(status=status.HTTP_418_IM_A_TEAPOT)
@@ -341,7 +343,7 @@ class StarOrderAccepted(APILoggingMixin, APIView):
                 customer_username
             )
         else:
-            return Response({'Order status is not valid'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'Не установлен статус заказа.'}, status=status.HTTP_400_BAD_REQUEST)
         send_mail(SUBJECT, TEXT_MESASGE, settings.EMAIL_HOST_USER, [customer_email])
         return Response(status=status.HTTP_201_CREATED)
 
@@ -402,7 +404,7 @@ class PersonalAccount(APILoggingMixin, APIView):
 
             json.append(orders)
         else:
-            return Response("No data invalid", status=status.HTTP_400_BAD_REQUEST)
+            return Response("Были переданы неверные данные. Не установлена личность пользователя.", status=status.HTTP_400_BAD_REQUEST)
         return Response(json, status=status.HTTP_200_OK)
 
 
@@ -449,9 +451,6 @@ class CongratulationView(APILoggingMixin, APIView):
                 cust_email = order.customer_id.email
                 star = Stars.objects.get(id=request.data['star_id'])
                 star_username = star.username
-                # cust = Customers.objects.get(id=cust_id)
-                # cust_email = cust.email
-                # cust_username = cust.username
                 SUBJECT = 'MySTAR: Уведомление!'
                 TEXT_MESASGE = 'Уважаемый {}, Вам пришло видео поздравление '.format(
                     cust_username, star_username

@@ -117,6 +117,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'django.middleware.locale.LocaleMiddleware',
 ]
 
 APPEND_SLASH = False
@@ -178,9 +179,12 @@ AUTH_PASSWORD_VALIDATORS = [
 # https://docs.djangoproject.com/en/3.1/topics/i18n/
 CORS_ORIGIN_ALLOW_ALL = True
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = 'ru-RU'
 
-LANGUAGES = (('en', "English",), ('ru', "Russian",),)
+LANGUAGES = [
+    ('ru', ('Russian')),
+
+]
 
 TIME_ZONE = 'UTC'
 
