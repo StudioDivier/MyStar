@@ -1,8 +1,9 @@
 from math import ceil
 import uuid
 from PIL import Image
+from loguru import logger
 from django_rest_api_logger import APILoggingMixin
-
+from django.shortcuts import render
 from django.contrib.auth import login
 from django.core.mail import send_mail
 from django.conf import settings
@@ -21,6 +22,11 @@ from .serializers import CustomerSerializer, StarSerializer, RatingSerializer, O
 from .serializers import VideoSerializer, CongratulationSerializer
 
 
+logger.add("log/debug.json", level="DEBUG", format="{time} {level} {message}", serialize=True,
+           rotation="1 MB", compression="zip")
+
+
+@logger.catch()
 class CustomerCreate(APIView):
     """
     Registers a new user.
@@ -45,7 +51,7 @@ class CustomerCreate(APIView):
             status=status.HTTP_201_CREATED,
         )
 
-
+@logger.catch()
 class LoginAPIView(APIView):
     """
     Logs in an existing user.
@@ -75,7 +81,7 @@ class LoginAPIView(APIView):
             return Response(json, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_404_NOT_FOUND)
 
-
+@logger.catch()
 class StarCreate(APIView):
     """
     Вьюшка для создания звезды с токеном
@@ -117,8 +123,8 @@ class StarCreate(APIView):
                 return Response(json, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-
-class StarById(APILoggingMixin, APIView):
+@logger.catch()
+class StarById(APIView):
     """
     Вьюшка для получения звезды по айди
     """
@@ -143,8 +149,8 @@ class StarById(APILoggingMixin, APIView):
             json = {"exception": "Поле 'id' ожидает чилсло, но было принято {}".format(id)}
             return Response(json, status=status.HTTP_400_BAD_REQUEST)
 
-
-class StarsList(APILoggingMixin, APIView):
+@logger.catch()
+class StarsList(APIView):
     """
     Получаем список всех звезд
     """
@@ -157,7 +163,8 @@ class StarsList(APILoggingMixin, APIView):
         return Response(json, status=status.HTTP_200_OK)
 
 
-class StarByCategory(APILoggingMixin, APIView):
+@logger.catch()
+class StarByCategory(APIView):
     """
     Вьюшка для получения спсика звезд по айди категории
     """
@@ -196,7 +203,8 @@ class StarByCategory(APILoggingMixin, APIView):
             return Response(json, status=status.HTTP_400_BAD_REQUEST)
 
 
-class RateStar(APILoggingMixin, APIView):
+@logger.catch()
+class RateStar(APIView):
     """
     Вьюшка для обновления рейтинга звезды 
     """
@@ -248,8 +256,8 @@ class RateStar(APILoggingMixin, APIView):
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-
-class OrderView(APILoggingMixin, APIView):
+@logger.catch()
+class OrderView(APIView):
     """
     Вьюшка для регистрации заказа и отправки уведомления на почту звезды
     """
@@ -304,7 +312,8 @@ class OrderView(APILoggingMixin, APIView):
         return Response(status=status.HTTP_418_IM_A_TEAPOT)
 
 
-class StarOrderAccepted(APILoggingMixin, APIView):
+@logger.catch()
+class StarOrderAccepted(APIView):
     """
     Вьюшка принятия или отклонения заяки на заказ со стороны звезды
     """
@@ -347,8 +356,8 @@ class StarOrderAccepted(APILoggingMixin, APIView):
         send_mail(SUBJECT, TEXT_MESASGE, settings.EMAIL_HOST_USER, [customer_email])
         return Response(status=status.HTTP_201_CREATED)
 
-
-class ListCategory(APILoggingMixin, APIView):
+@logger.catch()
+class ListCategory(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, format='json'):
@@ -357,8 +366,8 @@ class ListCategory(APILoggingMixin, APIView):
         json = cat_serial.data
         return Response(json, status=status.HTTP_200_OK)
 
-
-class PersonalAccount(APILoggingMixin, APIView):
+@logger.catch()
+class PersonalAccount(APIView):
     """
     Вьюшка личного кабинета
     """
@@ -407,8 +416,8 @@ class PersonalAccount(APILoggingMixin, APIView):
             return Response("Были переданы неверные данные. Не установлена личность пользователя.", status=status.HTTP_400_BAD_REQUEST)
         return Response(json, status=status.HTTP_200_OK)
 
-
-class AvatarUploadView(APILoggingMixin, APIView):
+@logger.catch()
+class AvatarUploadView(APIView):
     permission_classes = [IsAuthenticated]
     parser_classes = (MultiPartParser, )
 
@@ -421,8 +430,8 @@ class AvatarUploadView(APILoggingMixin, APIView):
         else:
             return Response(file_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-
-class VideohiView(APILoggingMixin, APIView):
+@logger.catch()
+class VideohiView(APIView):
     permission_classes = [IsAuthenticated]
     parser_classes = (MultiPartParser, )
 
@@ -435,8 +444,8 @@ class VideohiView(APILoggingMixin, APIView):
         else:
             return Response(file_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-
-class CongratulationView(APILoggingMixin, APIView):
+@logger.catch()
+class CongratulationView(APIView):
     permission_classes = [IsAuthenticated]
     parser_classes = (MultiPartParser, )
 
@@ -460,8 +469,8 @@ class CongratulationView(APILoggingMixin, APIView):
         else:
             return Response(file_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-
-class OrderDetailCustomerView(APILoggingMixin, APIView):
+@logger.catch()
+class OrderDetailCustomerView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, format='json'):
@@ -482,20 +491,13 @@ class OrderDetailCustomerView(APILoggingMixin, APIView):
             }
             return Response(json, status=status.HTTP_200_OK)
 
-
-class TestView(APILoggingMixin, APIView):
+@logger.catch()
+class TestView(APIView):
     """
     Временная тестовая вьюшка
     """
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        """
-        Вьюшка для проверки гипотиз и доказательства теорем
-        """
-        id = self.request.GET.get('id')
-        cust_set = Customers.objects.get(id=id)
-        json = {
-            'avatar': 'http://' + settings.ALLOWED_HOSTS[0] + ':8080/' + cust_set.avatar
-        }
-        return Response(json, status=status.HTTP_200_OK)
+
+        return Response({'done'})

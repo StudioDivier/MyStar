@@ -17,6 +17,7 @@ urlpatterns = [
 
     re_path(r'^login/?$', LoginAPIView.as_view(), name=None),
     re_path(r'^registration/?$', CustomerCreate.as_view(), name=None),
+    path('', include('social_django.urls')),
 
     path('upload/avatar/', AvatarUploadView.as_view(), name=None),
     path('upload/video/hi/', VideohiView.as_view(), name=None),
